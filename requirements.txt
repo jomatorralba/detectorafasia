@@ -1,0 +1,7 @@
+streamlit>=1.31.0
+numpy
+librosa
+soundfile
+plotly
+scipy
+pandas
