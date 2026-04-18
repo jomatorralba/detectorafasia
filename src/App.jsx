@@ -1,16 +1,17 @@
 import { useState, useCallback } from 'react'
-import { TMF }     from './pages/TMF'
-import { DDK }     from './pages/DDK'
-import { Abuelo }  from './pages/Abuelo'
+import { Sidebar }  from './components/Sidebar'
+import { TMF }      from './pages/TMF'
+import { DDK }      from './pages/DDK'
+import { Abuelo }   from './pages/Abuelo'
 import { Palabras } from './pages/Palabras'
-import { Summary } from './pages/Summary'
+import { Summary }  from './pages/Summary'
 
-const TABS = [
-  { id: 0, icon: '⏱️', label: 'TMF' },
-  { id: 1, icon: '🗣️', label: 'Diadococinesias' },
-  { id: 2, icon: '📖', label: 'Lectura del Abuelo' },
-  { id: 3, icon: '🔤', label: 'Palabras' },
-  { id: 4, icon: '📊', label: 'Resumen' },
+const PAGE_META = [
+  { title: 'Tiempo Máximo de Fonación',  desc: 'Duración de /A/ y /S/ sostenidas · cociente S/A' },
+  { title: 'Diadococinesias',            desc: 'Repetición de PA·TA·KA durante 5 segundos' },
+  { title: 'Lectura del Abuelo',         desc: 'Velocidad lectora en palabras por minuto' },
+  { title: 'Lectura de Palabras',        desc: 'Comparativa espectral con voz de referencia' },
+  { title: 'Resumen',                    desc: 'Resultados de todas las pruebas completadas' },
 ]
 
 export default function App() {
@@ -21,17 +22,14 @@ export default function App() {
     setResults(r => ({ ...r, [key]: value }))
   }, [])
 
-  const onReset = () => {
-    setResults({})
-    setTab(0)
-  }
+  const onReset = () => { setResults({}); setTab(0) }
 
   const pages = [
-    <TMF      key="tmf"     onResult={onResult} />,
-    <DDK      key="ddk"     onResult={onResult} />,
-    <Abuelo   key="abuelo"  onResult={onResult} />,
+    <TMF      key="tmf"      onResult={onResult} />,
+    <DDK      key="ddk"      onResult={onResult} />,
+    <Abuelo   key="abuelo"   onResult={onResult} />,
     <Palabras key="palabras" onResult={onResult} />,
-    <Summary  key="summary" results={results} onReset={onReset} />,
+    <Summary  key="summary"  results={results} onReset={onReset} />,
   ]
 
   const doneCount = [
@@ -41,49 +39,33 @@ export default function App() {
     Object.keys(results).some(k => k.startsWith('palabra_')),
   ].filter(Boolean).length
 
+  const meta = PAGE_META[tab]
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">🎙️ Evaluación de Disartria</h1>
-            <p className="text-xs text-gray-400">Herramienta clínica para logopedas</p>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#fff' }}>
+      <Sidebar active={tab} onChange={setTab} doneCount={doneCount} />
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Page header */}
+        <header style={{
+          padding: '16px 32px',
+          borderBottom: '1px solid #f0f0f0',
+          flexShrink: 0,
+          background: '#fff',
+        }}>
+          <h1 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: '#111', lineHeight: 1.3 }}>
+            {meta.title}
+          </h1>
+          <p style={{ margin: '2px 0 0', fontSize: 13, color: '#888' }}>{meta.desc}</p>
+        </header>
+
+        {/* Scrollable content */}
+        <main style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
+          <div style={{ maxWidth: 680, margin: '0 auto' }}>
+            {pages[tab]}
           </div>
-          {doneCount > 0 && (
-            <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2.5 py-1 rounded-full">
-              {doneCount}/4 pruebas
-            </span>
-          )}
-        </div>
-
-        {/* Tab bar */}
-        <div className="max-w-3xl mx-auto px-4 flex gap-1 overflow-x-auto pb-0 scrollbar-hide">
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium
-                whitespace-nowrap border-b-2 transition-colors duration-150
-                ${tab === t.id
-                  ? 'border-blue-600 text-blue-700'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-            >
-              <span>{t.icon}</span>
-              <span className="hidden sm:inline">{t.label}</span>
-            </button>
-          ))}
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="max-w-3xl mx-auto px-4 py-6">
-        {pages[tab]}
-      </main>
-
-      <footer className="max-w-3xl mx-auto px-4 py-6 text-center text-xs text-gray-300">
-        Esta herramienta no sustituye la valoración clínica profesional
-      </footer>
+        </main>
+      </div>
     </div>
   )
 }
