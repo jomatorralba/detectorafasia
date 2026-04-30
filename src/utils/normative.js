@@ -14,14 +14,12 @@ export const PALABRAS = {
 }
 
 export const ABUELO_TEXT =
-  'Abuelo viene a visitarnos todos los domingos. ' +
-  'Siempre trae caramelos para los niños y flores para la abuela. ' +
-  'Le gusta sentarse en el jardín y contarnos historias de cuando era joven. ' +
-  'Dice que antes la vida era más sencilla pero también más dura. ' +
-  'Trabajaba en el campo desde muy temprano hasta que se ponía el sol. ' +
-  'Ahora descansa y cuida su huerto con mucho cariño. ' +
-  'Los tomates de su huerto son los más ricos que he probado nunca. ' +
-  'Cuando nos vamos a casa siempre nos da un abrazo muy fuerte y cariñoso.'
+  'Usted quiere saber sobre mi abuelo. Bueno, él tiene cerca de noventa y tres años de edad y aún piensa tan lúcidamente como siempre. ' +
+  'Se viste solo y se pone su vieja chaqueta negra, que comúnmente tiene varios botones menos. ' +
+  'Una barba larga cuelga de su cara, inspirando a aquellos que lo observan, un profundo sentimiento de respeto. ' +
+  'Cuando habla, su voz parece un poco quebrada y temblorosa. ' +
+  'Dos veces al día, él disfruta tocando hábilmente un pequeño órgano. ' +
+  'Todos los días, el abuelo da un corto paseo, excepto en el invierno, cuando la lluvia o el frío se lo impiden.'
 
 export const ABUELO_WORDS = ABUELO_TEXT.split(' ').length
 
