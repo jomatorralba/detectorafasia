@@ -12,17 +12,41 @@ import {
   blobToBase64, base64ToBlob,
 } from '../utils/storage'
 
-function MetricCard({ label, value, sub, accent }) {
+function MetricCard({ label, value, refValue, prevValues = [], accent }) {
   return (
     <div style={{
       background: '#f9fafb', borderRadius: 10, padding: '10px 14px',
       borderLeft: accent ? `3px solid ${accent}` : '3px solid #e5e7eb',
     }}>
-      <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'monospace', color: '#111', lineHeight: 1.2 }}>
-        {value ?? <span style={{ color: '#ccc', fontSize: 14 }}>—</span>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
+        {/* Left: current value + label */}
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'monospace', color: '#111', lineHeight: 1.2 }}>
+            {value ?? <span style={{ color: '#ccc', fontSize: 14 }}>—</span>}
+          </div>
+          <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{label}</div>
+        </div>
+        {/* Right: ref in red + history in gray */}
+        {(refValue || prevValues.length > 0) && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0, maxWidth: 96 }}>
+            {refValue && (
+              <span style={{ fontSize: 10, color: '#ef4444', fontFamily: 'monospace', fontWeight: 600, lineHeight: 1 }}>
+                {refValue}
+              </span>
+            )}
+            {prevValues.length > 0 && (
+              <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                {prevValues.map((v, i) => (
+                  <span key={i} style={{
+                    fontSize: 9, fontFamily: 'monospace', lineHeight: 1.4,
+                    color: `rgba(40,40,40,${0.3 + (i / prevValues.length) * 0.55})`,
+                  }}>{v}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{label}</div>
-      {sub && <div style={{ fontSize: 10, color: '#bbb', marginTop: 1 }}>{sub}</div>}
     </div>
   )
 }
@@ -65,6 +89,7 @@ export function Palabras({ onResult }) {
   const [addMode, setAddMode]           = useState(false)
   const [newWord, setNewWord]           = useState('')
   const [recorded, setRecorded]         = useState({})
+  const [history, setHistory]           = useState({})
   const [loadingRef, setLoadingRef]     = useState(false)
 
   const recorder = useRecorder()
@@ -116,6 +141,19 @@ export function Palabras({ onResult }) {
           setPatAnalysis(analysis)
           setRecorded(r => ({ ...r, [selected]: data.duration }))
           onResult('palabra_' + selected, data.duration)
+          setHistory(h => {
+            const prev = h[selected] || []
+            const entry = {
+              duration:    data.duration,
+              onsetSec:    analysis.onsetSec,
+              rmsDb:       analysis.rmsDb,
+              peakDb:      analysis.peakDb,
+              cvIntensity: analysis.cvIntensity,
+              f0:          analysis.f0,
+              centroid:    analysis.centroid,
+            }
+            return { ...h, [selected]: [...prev, entry].slice(-8) }
+          })
         }
       } catch (e) { console.error(e) }
     })()
@@ -147,6 +185,7 @@ export function Palabras({ onResult }) {
     setWords(ws)
     setSelected(ws[0] || null)
     setRecorded(r => { const n = { ...r }; delete n[w]; return n })
+    setHistory(h => { const n = { ...h }; delete n[w]; return n })
   }
 
   const handleDeleteRef = () => {
@@ -337,7 +376,12 @@ export function Palabras({ onResult }) {
               </div>
 
               {/* Acoustic metrics grid */}
-              {patAnalysis && (
+              {patAnalysis && (() => {
+                const wh  = history[selected] || []
+                const prev = wh.slice(0, -1)  // all entries before current
+                const p = k => prev.map(e => e[k] != null ? String(e[k]) : '—')
+                const pFmt = (k, fn) => prev.map(e => e[k] != null ? fn(e[k]) : '—')
+                return (
                 <div>
                   <p style={{ fontSize: 11, color: '#aaa', marginBottom: 6, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Métricas
@@ -346,41 +390,50 @@ export function Palabras({ onResult }) {
                     <MetricCard
                       label="Duración"
                       value={`${patientData.duration.toFixed(2)} s`}
-                      sub={refData ? `ref ${refData.duration.toFixed(2)} s` : null}
+                      refValue={refData ? `${refData.duration.toFixed(2)}s` : null}
+                      prevValues={pFmt('duration', v => v.toFixed(2))}
                       accent="#6366f1"
                     />
                     <MetricCard
                       label="Latencia de inicio"
                       value={`${Math.round(patAnalysis.onsetSec * 1000)} ms`}
+                      refValue={refAnalysis ? `${Math.round(refAnalysis.onsetSec * 1000)}ms` : null}
+                      prevValues={pFmt('onsetSec', v => Math.round(v * 1000))}
                       accent="#6366f1"
                     />
                     <MetricCard
                       label="Intensidad media"
                       value={`${patAnalysis.rmsDb.toFixed(1)} dB`}
-                      sub={refAnalysis ? `ref ${refAnalysis.rmsDb.toFixed(1)} dB` : null}
+                      refValue={refAnalysis ? `${refAnalysis.rmsDb.toFixed(1)}dB` : null}
+                      prevValues={pFmt('rmsDb', v => v.toFixed(1))}
                       accent="#0ea5e9"
                     />
                     <MetricCard
                       label="Intensidad pico"
                       value={`${patAnalysis.peakDb.toFixed(1)} dB`}
+                      refValue={refAnalysis ? `${refAnalysis.peakDb.toFixed(1)}dB` : null}
+                      prevValues={pFmt('peakDb', v => v.toFixed(1))}
                       accent="#0ea5e9"
                     />
                     <MetricCard
                       label="Variabilidad intens."
                       value={`${Math.round(patAnalysis.cvIntensity * 100)} %`}
-                      sub="coef. variación"
+                      refValue={refAnalysis ? `${Math.round(refAnalysis.cvIntensity * 100)}%` : null}
+                      prevValues={pFmt('cvIntensity', v => Math.round(v * 100))}
                       accent="#f59e0b"
                     />
                     <MetricCard
                       label="F0 fundamental"
                       value={patAnalysis.f0 ? `${patAnalysis.f0} Hz` : null}
-                      sub={refAnalysis?.f0 ? `ref ${refAnalysis.f0} Hz` : null}
+                      refValue={refAnalysis?.f0 ? `${refAnalysis.f0}Hz` : null}
+                      prevValues={p('f0')}
                       accent="#ec4899"
                     />
                     <MetricCard
                       label="Centroide espectral"
                       value={`${patAnalysis.centroid} Hz`}
-                      sub={refAnalysis ? `ref ${refAnalysis.centroid} Hz` : null}
+                      refValue={refAnalysis ? `${refAnalysis.centroid}Hz` : null}
+                      prevValues={p('centroid')}
                       accent="#8b5cf6"
                     />
                     {dist != null && (
@@ -390,7 +443,8 @@ export function Palabras({ onResult }) {
                     )}
                   </div>
                 </div>
-              )}
+                )
+              })()}
             </div>
           )}
         </>
