@@ -45,21 +45,10 @@ export function OscillogramCanvas({ patientData, referenceData, height = 100 }) 
           const refOnset = getOnsetSample(referenceData.channelData, referenceData.sampleRate)
           refSlice = referenceData.channelData.slice(refOnset)
           maxLen   = Math.max(maxLen, refSlice.length)
-
-          // Reference — cyan
-          ctx.strokeStyle = 'rgba(34,211,238,0.5)'
-          ctx.lineWidth   = 1.5
-          ctx.beginPath()
-          for (let i = 0; i < refSlice.length; i++) {
-            const x = (i / maxLen) * w
-            const y = (0.5 - refSlice[i] * 0.44) * h
-            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-          }
-          ctx.stroke()
         }
 
-        // Patient — amber
-        ctx.strokeStyle = 'rgba(251,146,60,0.85)'
+        // Patient first — amber, solid
+        ctx.strokeStyle = 'rgba(251,146,60,0.9)'
         ctx.lineWidth   = 1.5
         ctx.beginPath()
         for (let i = 0; i < patSlice.length; i++) {
@@ -68,6 +57,19 @@ export function OscillogramCanvas({ patientData, referenceData, height = 100 }) 
           i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
         }
         ctx.stroke()
+
+        // Reference on top — cyan, translucent
+        if (refSlice) {
+          ctx.strokeStyle = 'rgba(56,139,253,0.45)'
+          ctx.lineWidth   = 2
+          ctx.beginPath()
+          for (let i = 0; i < refSlice.length; i++) {
+            const x = (i / maxLen) * w
+            const y = (0.5 - refSlice[i] * 0.44) * h
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+          }
+          ctx.stroke()
+        }
       } finally {
         if (!cancelled) setBusy(false)
       }
@@ -97,16 +99,16 @@ export function OscillogramCanvas({ patientData, referenceData, height = 100 }) 
         display: 'flex', gap: 12, fontSize: 10,
         color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace',
       }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ width: 14, height: 2, background: 'rgba(251,146,60,0.85)', display: 'inline-block', borderRadius: 1 }} />
-          Paciente
-        </span>
         {referenceData && (
           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ width: 14, height: 2, background: 'rgba(34,211,238,0.5)', display: 'inline-block', borderRadius: 1 }} />
+            <span style={{ width: 14, height: 2, background: 'rgba(56,139,253,0.55)', display: 'inline-block', borderRadius: 1 }} />
             Referencia
           </span>
         )}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ width: 14, height: 2, background: 'rgba(251,146,60,0.9)', display: 'inline-block', borderRadius: 1 }} />
+          Paciente
+        </span>
       </div>
     </div>
   )
