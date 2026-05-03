@@ -38,7 +38,7 @@ export function classify(value, key, mode = 'min') {
 }
 
 export const STATUS = {
-  good: { icon: '🟢', label: 'Normal',   css: 'border-green-400 bg-green-50 text-green-900' },
-  warn: { icon: '🟡', label: 'Límite',   css: 'border-yellow-400 bg-yellow-50 text-yellow-900' },
-  bad:  { icon: '🔴', label: 'Alterado', css: 'border-red-400 bg-red-50 text-red-900' },
+  good: { dot: 'bg-green-400',  label: 'Normal',   css: 'border-green-300 bg-green-50 text-green-800' },
+  warn: { dot: 'bg-yellow-400', label: 'Límite',   css: 'border-yellow-300 bg-yellow-50 text-yellow-800' },
+  bad:  { dot: 'bg-red-400',    label: 'Alterado', css: 'border-red-300 bg-red-50 text-red-800' },
 }
