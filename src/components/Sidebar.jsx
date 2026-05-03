@@ -1,51 +1,12 @@
 import { useState } from 'react'
-
-const IconTimer = () => (
-  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor"
-    strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="7.5" cy="8.5" r="5.5"/>
-    <path d="M7.5 5.5v3l2 1.3"/>
-    <path d="M5.5 1h4M7.5 1v2"/>
-  </svg>
-)
-
-const IconWave = () => (
-  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor"
-    strokeWidth="1.5" strokeLinecap="round">
-    <path d="M1 7.5Q3.75 2.5 5 7.5Q6.25 12.5 8.75 7.5Q10 2.5 11.25 7.5Q12.5 12.5 14 7.5"/>
-  </svg>
-)
-
-const IconBook = () => (
-  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor"
-    strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 3a1 1 0 0 1 1-1h9v11H3a1 1 0 0 1-1-1V3z"/>
-    <path d="M2 11a1 1 0 0 0 1 1h9"/>
-    <path d="M7.5 2v11"/>
-  </svg>
-)
-
-const IconType = () => (
-  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor"
-    strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 4h11M7.5 4v8M5 12h5"/>
-  </svg>
-)
-
-const IconBars = () => (
-  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor"
-    strokeWidth="1.5" strokeLinecap="round">
-    <path d="M3 12V7M7.5 12V3M12 12V8.5"/>
-    <path d="M1 12h13"/>
-  </svg>
-)
+import { Timer, AudioLines, BookOpen, AudioWaveform, BarChart2, Mic2 } from 'lucide-react'
 
 const TABS = [
-  { id: 0, icon: <IconTimer />, label: 'TMF',                sub: 'Fonación máxima' },
-  { id: 1, icon: <IconWave />,  label: 'Diadococinesias',   sub: 'PA·TA·KA' },
-  { id: 2, icon: <IconBook />,  label: 'Lectura del Abuelo', sub: 'Velocidad lectora' },
-  { id: 3, icon: <IconType />,  label: 'Palabras',           sub: 'Espectrograma' },
-  { id: 4, icon: <IconBars />,  label: 'Resumen',            sub: 'Resultados' },
+  { id: 0, icon: <Timer size={15} strokeWidth={1.6}/>,         label: 'TMF',                sub: 'Fonación máxima' },
+  { id: 1, icon: <AudioLines size={15} strokeWidth={1.6}/>,    label: 'Diadococinesias',   sub: 'PA·TA·KA' },
+  { id: 2, icon: <BookOpen size={15} strokeWidth={1.6}/>,      label: 'Lectura del Abuelo', sub: 'Velocidad lectora' },
+  { id: 3, icon: <AudioWaveform size={15} strokeWidth={1.6}/>, label: 'Palabras',           sub: 'Espectrograma' },
+  { id: 4, icon: <BarChart2 size={15} strokeWidth={1.6}/>,     label: 'Resumen',            sub: 'Resultados' },
 ]
 
 export function Sidebar({ active, onChange, doneCount }) {
@@ -69,12 +30,7 @@ export function Sidebar({ active, onChange, doneCount }) {
           justifyContent: collapsed ? 'center' : 'flex-start',
         }}
       >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#388bfd"
-          strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <ellipse cx="9" cy="9" rx="3" ry="6"/>
-          <path d="M3 9a6 6 0 0 0 12 0"/>
-          <path d="M9 15v2M6 17h6"/>
-        </svg>
+        <Mic2 size={18} strokeWidth={1.6} color="#388bfd"/>
         {!collapsed && (
           <div style={{ lineHeight: 1.2 }}>
             <div style={{ color: '#e6edf3', fontWeight: 600, fontSize: 13 }}>Disartria</div>

@@ -1,3 +1,5 @@
+import { Mic, Square } from 'lucide-react'
+
 export function RecordButton({ isRecording, elapsed, onStart, onStop }) {
   const mm = String(Math.floor(elapsed / 60)).padStart(2, '0')
   const ss = String(elapsed % 60).padStart(2, '0')
@@ -15,7 +17,11 @@ export function RecordButton({ isRecording, elapsed, onStart, onStop }) {
         {isRecording && (
           <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-30" />
         )}
-        <span className="relative z-10 text-2xl">{isRecording ? '⏹' : '🎙️'}</span>
+        <span className="relative z-10">
+          {isRecording
+            ? <Square size={24} strokeWidth={2} fill="white"/>
+            : <Mic size={24} strokeWidth={2}/>}
+        </span>
         <span className="relative z-10 text-[10px] mt-0.5 tracking-wide">
           {isRecording ? 'STOP' : 'GRABAR'}
         </span>
