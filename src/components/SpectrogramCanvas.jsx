@@ -1,101 +1,93 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  computeSpectrogram,
-  findOnsetFrame,
-  blendSpectrograms,
-  renderPatientSpectrogram,
-} from '../utils/spectrogram'
+import { computeSpectrogram, findOnsetFrame, renderPatientSpectrogram } from '../utils/spectrogram'
 
 const MAX_FREQ = 8000
 
-export function SpectrogramCanvas({ patientData, referenceData, height = 200 }) {
+function addAxisLabels(ctx, w, h) {
+  ctx.font      = '9px monospace'
+  ;[8000, 4000, 2000, 1000, 500].forEach(hz => {
+    if (hz > MAX_FREQ) return
+    const y = h - Math.floor((hz / MAX_FREQ) * h)
+    ctx.fillStyle = 'rgba(255,255,255,0.1)'
+    ctx.fillRect(0, y, w, 1)
+    ctx.fillStyle = 'rgba(255,255,255,0.4)'
+    ctx.fillText(hz >= 1000 ? hz / 1000 + 'k' : String(hz), 3, y - 2)
+  })
+}
+
+function SpectroPanel({ audioData, label, height }) {
   const canvasRef = useRef(null)
-  const [busy, setBusy]   = useState(false)
-  const [error, setError] = useState(null)
+  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas || !patientData) return
+    if (!canvas || !audioData) return
 
     let cancelled = false
     setBusy(true)
-    setError(null)
 
-    // Run in a macro task so the spinner renders first
     setTimeout(() => {
       try {
-        const { channelData, sampleRate } = patientData
-        const patSpec   = computeSpectrogram(channelData, sampleRate)
-        const patOnset  = findOnsetFrame(patSpec.frames)
-
-        let imageData
-        if (referenceData) {
-          const refSpec  = computeSpectrogram(referenceData.channelData, referenceData.sampleRate)
-          const refOnset = findOnsetFrame(refSpec.frames)
-          imageData = blendSpectrograms(patSpec, patOnset, refSpec, refOnset, canvas.width, canvas.height, MAX_FREQ)
-        } else {
-          imageData = renderPatientSpectrogram(patSpec, patOnset, canvas.width, canvas.height, MAX_FREQ)
-        }
-
+        const spec  = computeSpectrogram(audioData.channelData, audioData.sampleRate)
+        const onset = findOnsetFrame(spec.frames)
+        const img   = renderPatientSpectrogram(spec, onset, canvas.width, canvas.height, MAX_FREQ)
         if (cancelled) return
-        canvas.getContext('2d').putImageData(imageData, 0, 0)
-
-        // Frequency axis labels
         const ctx = canvas.getContext('2d')
-        ctx.fillStyle = 'rgba(255,255,255,0.55)'
-        ctx.font = '10px monospace'
-        ;[8000, 4000, 2000, 1000, 500].forEach(hz => {
-          if (hz > MAX_FREQ) return
-          const y = canvas.height - Math.floor((hz / MAX_FREQ) * canvas.height)
-          ctx.fillText(`${hz >= 1000 ? hz/1000 + 'k' : hz}`, 4, y - 2)
-          ctx.fillStyle = 'rgba(255,255,255,0.15)'
-          ctx.fillRect(0, y, canvas.width, 1)
-          ctx.fillStyle = 'rgba(255,255,255,0.55)'
-        })
+        ctx.putImageData(img, 0, 0)
+        addAxisLabels(ctx, canvas.width, canvas.height)
       } catch (e) {
-        if (!cancelled) setError(e.message)
+        console.error(e)
       } finally {
         if (!cancelled) setBusy(false)
       }
     }, 30)
 
     return () => { cancelled = true }
-  }, [patientData, referenceData])
+  }, [audioData])
 
   return (
-    <div className="relative rounded-xl overflow-hidden" style={{ background: '#000', height }}>
+    <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
+      <div style={{
+        position: 'absolute', top: 5, left: 5, zIndex: 1,
+        fontSize: 10, color: 'rgba(255,255,255,0.5)',
+        fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.06em',
+        background: 'rgba(0,0,0,0.45)', padding: '1px 6px', borderRadius: 3,
+        pointerEvents: 'none',
+      }}>{label}</div>
       <canvas
         ref={canvasRef}
-        width={800}
+        width={400}
         height={height}
-        className="w-full"
-        style={{ height, display: 'block' }}
+        style={{ width: '100%', height, display: 'block' }}
       />
-
       {busy && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/70">
-          <span className="text-white text-sm animate-pulse">Calculando espectrograma…</span>
-        </div>
-      )}
-      {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-          <span className="text-red-400 text-sm">Error: {error}</span>
-        </div>
-      )}
-
-      {/* Legend */}
-      <div className="absolute bottom-2 right-2 flex gap-3 text-[10px]">
-        <span className="flex items-center gap-1 text-white/60">
-          <span className="w-3 h-2 rounded-sm inline-block" style={{ background: 'linear-gradient(to right,#000,#f97316)' }} />
-          Paciente
-        </span>
-        {referenceData && (
-          <span className="flex items-center gap-1 text-white/60">
-            <span className="w-3 h-2 rounded-sm inline-block" style={{ background: 'linear-gradient(to right,#000,#22d3ee)' }} />
-            Referencia
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.65)',
+        }}>
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontFamily: 'monospace' }}>
+            calculando…
           </span>
-        )}
-      </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function SpectrogramCanvas({ patientData, referenceData, height = 180 }) {
+  return (
+    <div style={{
+      display: 'flex', gap: 1, background: '#000',
+      borderRadius: 12, overflow: 'hidden', height,
+    }}>
+      {referenceData && (
+        <>
+          <SpectroPanel audioData={referenceData} label="Referencia" height={height} />
+          <div style={{ width: 1, background: 'rgba(255,255,255,0.1)', flexShrink: 0 }} />
+        </>
+      )}
+      <SpectroPanel audioData={patientData} label="Paciente" height={height} />
     </div>
   )
 }

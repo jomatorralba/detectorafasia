@@ -14,7 +14,14 @@ export function Summary({ results, onReset }) {
   if (!hasData) {
     return (
       <div className="text-center py-16 text-gray-400">
-        <div className="text-4xl mb-4">📋</div>
+        <div className="mb-4 flex justify-center opacity-30">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="1"/>
+            <path d="M9 12h6M9 16h4"/>
+          </svg>
+        </div>
         <p className="text-lg font-medium">Aún no hay resultados</p>
         <p className="text-sm mt-1">Completa al menos una prueba para ver el resumen.</p>
       </div>
@@ -50,7 +57,8 @@ export function Summary({ results, onReset }) {
                     <td className="px-5 py-3">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5
                         rounded-full text-xs font-semibold border ${s.css}`}>
-                        {s.icon} {s.label}
+                        <span className={`w-1.5 h-1.5 rounded-full ${s.dot} shrink-0`} />
+                        {s.label}
                       </span>
                     </td>
                   </tr>
@@ -84,7 +92,9 @@ export function Summary({ results, onReset }) {
                     <td className="px-5 py-2 text-gray-500">{PALABRAS[w]?.ref} s</td>
                     <td className="px-5 py-2 font-mono">{ratio?.toFixed(2)}×</td>
                     <td className="px-5 py-2">
-                      {ratio <= 1.5 ? '✅ Normal' : '⚠️ Lento'}
+                      {ratio <= 1.5
+                        ? <span className="inline-flex items-center gap-1 text-green-700 text-xs font-medium"><span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0"/> Normal</span>
+                        : <span className="inline-flex items-center gap-1 text-red-700 text-xs font-medium"><span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0"/> Lento</span>}
                     </td>
                   </tr>
                 )
@@ -100,7 +110,7 @@ export function Summary({ results, onReset }) {
           className="px-6 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600
                      hover:border-red-300 hover:text-red-600 font-medium text-sm transition"
         >
-          🔄 Nueva evaluación
+          Nueva evaluación
         </button>
       </div>
     </div>

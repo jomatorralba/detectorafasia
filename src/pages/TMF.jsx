@@ -107,7 +107,7 @@ export function TMF({ onResult }) {
 
       {ratio !== null && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">📐 Cociente S/A</h3>
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Cociente S/A</h3>
           <div className="grid grid-cols-3 gap-4 items-center">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-700">{tmfA.toFixed(1)}<span className="text-base font-normal ml-1">s</span></div>
@@ -124,12 +124,12 @@ export function TMF({ onResult }) {
           </div>
           {ratio > 1.4 && (
             <p className="mt-4 text-sm bg-blue-50 text-blue-800 rounded-lg px-4 py-2">
-              💡 Cociente &gt; 1.4 → posible patología glótica.
+Cociente &gt; 1.4 → posible patología glótica.
             </p>
           )}
           {ratio < 0.7 && (
             <p className="mt-4 text-sm bg-blue-50 text-blue-800 rounded-lg px-4 py-2">
-              💡 Cociente &lt; 0.7 → posible patología respiratoria o insuficiencia velofaríngea.
+Cociente &lt; 0.7 → posible patología respiratoria o insuficiencia velofaríngea.
             </p>
           )}
         </div>

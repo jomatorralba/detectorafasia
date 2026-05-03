@@ -3,38 +3,84 @@ import { useRecorder } from '../hooks/useRecorder'
 import { RecordButton } from '../components/RecordButton'
 import { LiveWaveform } from '../components/Waveform'
 import { SpectrogramCanvas } from '../components/SpectrogramCanvas'
+import { OscillogramCanvas } from '../components/OscillogramCanvas'
 import { decodeAudio } from '../utils/audio'
+import { analyzeAudio, acousticDistance } from '../utils/acoustics'
 import {
   loadWords, addWord, deleteWord,
   loadReference, saveReference, deleteReference,
   blobToBase64, base64ToBlob,
 } from '../utils/storage'
 
+function MetricCard({ label, value, sub, accent }) {
+  return (
+    <div style={{
+      background: '#f9fafb', borderRadius: 10, padding: '10px 14px',
+      borderLeft: accent ? `3px solid ${accent}` : '3px solid #e5e7eb',
+    }}>
+      <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'monospace', color: '#111', lineHeight: 1.2 }}>
+        {value ?? <span style={{ color: '#ccc', fontSize: 14 }}>—</span>}
+      </div>
+      <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{label}</div>
+      {sub && <div style={{ fontSize: 10, color: '#bbb', marginTop: 1 }}>{sub}</div>}
+    </div>
+  )
+}
+
+function DistanceBadge({ dist }) {
+  if (dist == null) return null
+  const pct   = Math.round(dist * 100)
+  const color = pct < 20 ? '#22c55e' : pct < 40 ? '#f59e0b' : '#ef4444'
+  const label = pct < 20 ? 'Similitud alta' : pct < 40 ? 'Similitud moderada' : 'Diferencia significativa'
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10,
+      background: '#f9fafb', borderRadius: 10, padding: '10px 14px',
+      borderLeft: `3px solid ${color}`,
+    }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'monospace', color: '#111' }}>
+          {pct}%
+        </div>
+        <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>Distancia espectral</div>
+      </div>
+      <span style={{
+        fontSize: 10, fontWeight: 600, color, background: color + '18',
+        padding: '2px 7px', borderRadius: 4, border: `1px solid ${color}40`,
+      }}>
+        {label}
+      </span>
+    </div>
+  )
+}
+
 export function Palabras({ onResult }) {
-  const [words, setWords]           = useState([])
-  const [selected, setSelected]     = useState(null)
-  const [patientData, setPatient]   = useState(null)
-  const [refData, setRefData]       = useState(null)
-  const [refMode, setRefMode]       = useState(false) // recording reference vs patient
-  const [addMode, setAddMode]       = useState(false)
-  const [newWord, setNewWord]       = useState('')
-  const [recorded, setRecorded]     = useState({}) // word → duration
-  const [loadingRef, setLoadingRef] = useState(false)
+  const [words, setWords]               = useState([])
+  const [selected, setSelected]         = useState(null)
+  const [patientData, setPatient]       = useState(null)
+  const [refData, setRefData]           = useState(null)
+  const [patAnalysis, setPatAnalysis]   = useState(null)
+  const [refAnalysis, setRefAnalysis]   = useState(null)
+  const [refMode, setRefMode]           = useState(false)
+  const [addMode, setAddMode]           = useState(false)
+  const [newWord, setNewWord]           = useState('')
+  const [recorded, setRecorded]         = useState({})
+  const [loadingRef, setLoadingRef]     = useState(false)
 
   const recorder = useRecorder()
 
-  // Load words on mount
   useEffect(() => {
     const ws = loadWords()
     setWords(ws)
     if (ws.length > 0) setSelected(ws[0])
   }, [])
 
-  // Load reference when word changes
   useEffect(() => {
     if (!selected) return
     setPatient(null)
     setRefData(null)
+    setPatAnalysis(null)
+    setRefAnalysis(null)
     setRefMode(false)
 
     const stored = loadReference(selected)
@@ -42,12 +88,14 @@ export function Palabras({ onResult }) {
 
     setLoadingRef(true)
     decodeAudio(base64ToBlob(stored.audio, stored.mimeType))
-      .then(data => setRefData(data))
+      .then(data => {
+        setRefData(data)
+        setRefAnalysis(analyzeAudio(data))
+      })
       .catch(console.error)
       .finally(() => setLoadingRef(false))
   }, [selected])
 
-  // Handle recording blob
   useEffect(() => {
     if (!recorder.blob || !selected) return
     let cancelled = false
@@ -60,9 +108,12 @@ export function Palabras({ onResult }) {
           const b64 = await blobToBase64(recorder.blob)
           saveReference(selected, b64, recorder.blob.type)
           setRefData(data)
+          setRefAnalysis(analyzeAudio(data))
           setRefMode(false)
         } else {
           setPatient(data)
+          const analysis = analyzeAudio(data)
+          setPatAnalysis(analysis)
           setRecorded(r => ({ ...r, [selected]: data.duration }))
           onResult('palabra_' + selected, data.duration)
         }
@@ -71,8 +122,12 @@ export function Palabras({ onResult }) {
     return () => { cancelled = true }
   }, [recorder.blob])
 
+  const dist = patAnalysis && refAnalysis
+    ? acousticDistance(patAnalysis.spec, patAnalysis.onsetFrame, refAnalysis.spec, refAnalysis.onsetFrame)
+    : null
+
   const selectWord = w => {
-    setSelected(w); setPatient(null); setRefMode(false)
+    setSelected(w); setPatient(null); setPatAnalysis(null); setRefMode(false)
   }
 
   const handleAddWord = () => {
@@ -97,6 +152,7 @@ export function Palabras({ onResult }) {
   const handleDeleteRef = () => {
     deleteReference(selected)
     setRefData(null)
+    setRefAnalysis(null)
   }
 
   return (
@@ -123,7 +179,10 @@ export function Palabras({ onResult }) {
                 ? 'bg-green-50 border-green-300 text-green-800'
                 : 'bg-white border-gray-200 text-gray-700 hover:border-gray-400'}`}
           >
-            {recorded[w] && '✓ '}{w}
+            {recorded[w] && (
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block', flexShrink: 0 }} />
+            )}
+            {w}
             {words.length > 1 && selected === w && (
               <span
                 onClick={e => { e.stopPropagation(); handleDeleteWord(w) }}
@@ -177,12 +236,13 @@ export function Palabras({ onResult }) {
           <div className={`rounded-xl p-4 border flex items-start justify-between gap-3
             ${refData ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
             <div>
-              <p className="text-sm font-semibold text-gray-800">
-                {loadingRef ? 'Cargando referencia…' : refData ? '✅ Referencia grabada' : '⚠️ Sin referencia — graba una voz normal'}
+              <p className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full shrink-0 ${refData ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                {loadingRef ? 'Cargando referencia…' : refData ? 'Referencia grabada' : 'Sin referencia — graba una voz normal'}
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5 ml-4">
                 {refData
-                  ? 'El espectrograma se superpondrá sobre la referencia (azul = paciente, verde = normal)'
+                  ? 'Espectrogramas en paralelo · oscilograma superpuesto alineado por onset'
                   : 'Sin referencia solo se muestra el espectrograma del paciente'}
               </p>
             </div>
@@ -195,10 +255,10 @@ export function Palabras({ onResult }) {
                 </button>
               )}
               <button
-                onClick={() => { setRefMode(true); setPatient(null) }}
+                onClick={() => { setRefMode(true); setPatient(null); setPatAnalysis(null) }}
                 className="px-2.5 py-1.5 text-xs font-medium rounded-lg border bg-white hover:bg-gray-50 transition"
               >
-                {refData ? '↺ Re-grabar' : 'Grabar referencia'}
+                {refData ? 'Re-grabar' : 'Grabar referencia'}
               </button>
             </div>
           </div>
@@ -243,31 +303,94 @@ export function Palabras({ onResult }) {
             </div>
           )}
 
-          {/* Spectrogram */}
+          {/* Analysis panels */}
           {patientData && (
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-800">Comparativa espectral (alineada por onset)</h3>
-              <SpectrogramCanvas
-                patientData={patientData}
-                referenceData={refData}
-                height={200}
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-50 rounded-xl p-3 text-center">
-                  <div className="text-xl font-bold font-mono text-gray-900">
-                    {patientData.duration.toFixed(2)} s
-                  </div>
-                  <div className="text-xs text-gray-500 mt-0.5">Duración paciente</div>
-                </div>
-                {refData && (
-                  <div className="bg-gray-50 rounded-xl p-3 text-center">
-                    <div className="text-xl font-bold font-mono text-gray-900">
-                      {refData.duration.toFixed(2)} s
-                    </div>
-                    <div className="text-xs text-gray-500 mt-0.5">Duración referencia</div>
-                  </div>
-                )}
+              {/* Section label */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-gray-700">Análisis acústico</span>
+                <div style={{ flex: 1, height: 1, background: '#f0f0f0' }} />
               </div>
+
+              {/* Oscillogram — overlaid, onset-aligned */}
+              <div>
+                <p style={{ fontSize: 11, color: '#aaa', marginBottom: 4, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Oscilograma{refData ? ' (onset-aligned)' : ''}
+                </p>
+                <OscillogramCanvas
+                  patientData={patientData}
+                  referenceData={refData}
+                  height={90}
+                />
+              </div>
+
+              {/* Spectrograms — side by side */}
+              <div>
+                <p style={{ fontSize: 11, color: '#aaa', marginBottom: 4, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Espectrograma{refData ? ' (referencia | paciente)' : ''}
+                </p>
+                <SpectrogramCanvas
+                  patientData={patientData}
+                  referenceData={refData}
+                  height={180}
+                />
+              </div>
+
+              {/* Acoustic metrics grid */}
+              {patAnalysis && (
+                <div>
+                  <p style={{ fontSize: 11, color: '#aaa', marginBottom: 6, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Métricas
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                    <MetricCard
+                      label="Duración"
+                      value={`${patientData.duration.toFixed(2)} s`}
+                      sub={refData ? `ref ${refData.duration.toFixed(2)} s` : null}
+                      accent="#6366f1"
+                    />
+                    <MetricCard
+                      label="Latencia de inicio"
+                      value={`${Math.round(patAnalysis.onsetSec * 1000)} ms`}
+                      accent="#6366f1"
+                    />
+                    <MetricCard
+                      label="Intensidad media"
+                      value={`${patAnalysis.rmsDb.toFixed(1)} dB`}
+                      sub={refAnalysis ? `ref ${refAnalysis.rmsDb.toFixed(1)} dB` : null}
+                      accent="#0ea5e9"
+                    />
+                    <MetricCard
+                      label="Intensidad pico"
+                      value={`${patAnalysis.peakDb.toFixed(1)} dB`}
+                      accent="#0ea5e9"
+                    />
+                    <MetricCard
+                      label="Variabilidad intens."
+                      value={`${Math.round(patAnalysis.cvIntensity * 100)} %`}
+                      sub="coef. variación"
+                      accent="#f59e0b"
+                    />
+                    <MetricCard
+                      label="F0 fundamental"
+                      value={patAnalysis.f0 ? `${patAnalysis.f0} Hz` : null}
+                      sub={refAnalysis?.f0 ? `ref ${refAnalysis.f0} Hz` : null}
+                      accent="#ec4899"
+                    />
+                    <MetricCard
+                      label="Centroide espectral"
+                      value={`${patAnalysis.centroid} Hz`}
+                      sub={refAnalysis ? `ref ${refAnalysis.centroid} Hz` : null}
+                      accent="#8b5cf6"
+                    />
+                    {dist != null && (
+                      <div style={{ gridColumn: 'span 2' }}>
+                        <DistanceBadge dist={dist} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>
@@ -288,8 +411,9 @@ export function Palabras({ onResult }) {
                   <td className="px-4 py-2.5 font-semibold text-gray-800">{w}</td>
                   <td className="px-4 py-2.5 font-mono text-gray-600">{d.toFixed(2)} s</td>
                   <td className="px-4 py-2.5">
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                      ✓ Grabada
+                    <span className="inline-flex items-center gap-1.5 text-xs text-green-700 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
+                      Grabada
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-right">
