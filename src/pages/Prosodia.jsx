@@ -49,9 +49,9 @@ function yinPitch(frame, sr) {
   let rs = 0
   for (let τ = 1; τ <= hi; τ++) { rs += d[τ]; cmnd[τ] = rs > 0 ? d[τ] * τ / rs : 1 }
 
-  // First valley below threshold (absolute threshold = 0.13)
+  // First valley below threshold (absolute threshold = 0.15)
   for (let τ = lo; τ < hi; τ++) {
-    if (cmnd[τ] < 0.13) {
+    if (cmnd[τ] < 0.15) {
       while (τ + 1 < hi && cmnd[τ + 1] < cmnd[τ]) τ++
       return sr / τ
     }
@@ -66,10 +66,10 @@ function extractF0(pcm, sr) {
 
   for (let i = 0; i + FN <= pcm.length; i += HN) {
     const frame = pcm.subarray(i, i + FN)
-    // Skip silence (RMS < 0.008)
+    // Skip silence (RMS < 0.002)
     let rms = 0
     for (let k = 0; k < frame.length; k++) rms += frame[k] * frame[k]
-    if (Math.sqrt(rms / frame.length) < 0.008) continue
+    if (Math.sqrt(rms / frame.length) < 0.002) continue
 
     const f0 = yinPitch(frame, sr)
     if (f0 > 0) { times.push(+(i / sr).toFixed(3)); raw.push(+f0.toFixed(1)) }
