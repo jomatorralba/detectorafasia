@@ -3,8 +3,10 @@ import { useRecorder } from '../hooks/useRecorder'
 import { RecordButton } from '../components/RecordButton'
 import { Waveform, LiveWaveform } from '../components/Waveform'
 import { Badge } from '../components/Badge'
-import { decodeAudio, getWaveformPoints } from '../utils/audio'
+import { decodeAudio, getWaveformPoints, calcPauseStats } from '../utils/audio'
 import { ABUELO_TEXT, ABUELO_WORDS, classify } from '../utils/normative'
+
+const ABUELO_SYLLABLES = ABUELO_WORDS * 1.7  // aprox. sílabas en español (Pellegrino et al. 2011)
 
 export function Abuelo({ onResult }) {
   const recorder              = useRecorder()
@@ -22,9 +24,11 @@ export function Abuelo({ onResult }) {
         if (cancelled) return
         const wpm    = duration > 0 ? (ABUELO_WORDS / duration) * 60 : 0
         const points = getWaveformPoints(channelData, sampleRate)
+        const pauses = calcPauseStats(channelData, sampleRate, ABUELO_SYLLABLES)
         setResult({ wpm, duration })
         setWave({ points, duration })
         onResult('wpm', wpm)
+        if (pauses) onResult('pause_stats', pauses)
       } catch (e) { console.error(e) }
       if (!cancelled) setLoading(false)
     })()

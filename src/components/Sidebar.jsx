@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Timer, AudioLines, BookOpen, AudioWaveform, BarChart2, Users, Activity } from 'lucide-react'
+import { Timer, AudioLines, BookOpen, AudioWaveform, BarChart2, Users, Activity, Waves } from 'lucide-react'
 import { NiLogo } from './NiLogo'
 
 const C = {
@@ -17,7 +17,8 @@ const TABS = [
   { id: 2, icon: <BookOpen size={15} strokeWidth={1.6}/>,      label: 'Lectura del Abuelo', sub: 'Velocidad lectora' },
   { id: 3, icon: <AudioWaveform size={15} strokeWidth={1.6}/>, label: 'Palabras',           sub: 'Espectrograma' },
   { id: 4, icon: <Activity size={15} strokeWidth={1.6}/>,      label: 'Prosodia',           sub: 'Melodía del habla' },
-  { id: 5, icon: <BarChart2 size={15} strokeWidth={1.6}/>,     label: 'Resumen',            sub: 'Resultados' },
+  { id: 5, icon: <Waves size={15} strokeWidth={1.6}/>,         label: 'Vocales',            sub: 'Espacio vocálico' },
+  { id: 6, icon: <BarChart2 size={15} strokeWidth={1.6}/>,     label: 'Resumen',            sub: 'Resultados' },
 ]
 
 export function Sidebar({ active, onChange, doneCount, onPatientsClick, patientsActive }) {
@@ -120,11 +121,11 @@ export function Sidebar({ active, onChange, doneCount, onPatientsClick, patients
           }}>
             <div style={{ flex: 1, background: 'rgba(255,255,255,0.1)', borderRadius: 4, height: 3 }}>
               <div style={{
-                width: `${(doneCount / 5) * 100}%`,
+                width: `${(doneCount / 6) * 100}%`,
                 background: 'rgba(255,255,255,0.55)', height: 3, borderRadius: 4, transition: 'width 0.3s',
               }} />
             </div>
-            <span style={{ color: C.muted, fontSize: 11, whiteSpace: 'nowrap' }}>{doneCount}/5</span>
+            <span style={{ color: C.muted, fontSize: 11, whiteSpace: 'nowrap' }}>{doneCount}/6</span>
           </div>
         </div>
       )}

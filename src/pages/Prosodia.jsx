@@ -27,37 +27,7 @@ const PHRASES = [
   },
 ]
 
-// ─── F0 extraction (YIN algorithm) ───────────────────────────────────────────
-
-function yinPitch(frame, sr) {
-  const W  = frame.length
-  const lo = Math.ceil(sr / 500)   // period for 500 Hz (highest)
-  const hi = Math.floor(sr / 75)   // period for 75 Hz  (lowest)
-  if (hi >= W / 2) return 0
-
-  // Difference function
-  const d = new Float32Array(hi + 1)
-  const lim = W - hi
-  for (let τ = 1; τ <= hi; τ++) {
-    let s = 0
-    for (let i = 0; i < lim; i++) { const x = frame[i] - frame[i + τ]; s += x * x }
-    d[τ] = s
-  }
-
-  // Cumulative mean normalized difference
-  const cmnd = new Float32Array(hi + 1); cmnd[0] = 1
-  let rs = 0
-  for (let τ = 1; τ <= hi; τ++) { rs += d[τ]; cmnd[τ] = rs > 0 ? d[τ] * τ / rs : 1 }
-
-  // First valley below threshold (absolute threshold = 0.15)
-  for (let τ = lo; τ < hi; τ++) {
-    if (cmnd[τ] < 0.15) {
-      while (τ + 1 < hi && cmnd[τ + 1] < cmnd[τ]) τ++
-      return sr / τ
-    }
-  }
-  return 0 // unvoiced
-}
+import { yinPitch } from '../utils/yin.js'
 
 function extractF0(pcm, sr) {
   const FN = Math.round(sr * 0.040) // 40 ms frame (necesario para que hi < W/2 a 48kHz)
@@ -250,13 +220,35 @@ export function Prosodia({ onResult }) {
   const doneIds  = PHRASES.filter(p => results[p.id])
   const allDone  = doneIds.length === 3
 
+  // Pendiente final F0: regresión lineal sobre el último 30 % de frames voiced
+  const slopeFinal = (times, f0s) => {
+    if (!times || times.length < 3) return 0
+    const cut = Math.floor(times.length * 0.7)
+    const xs = times.slice(cut), ys = f0s.slice(cut)
+    const n = xs.length
+    if (n < 2) return 0
+    const xm = xs.reduce((a, b) => a + b, 0) / n
+    const ym = ys.reduce((a, b) => a + b, 0) / n
+    let num = 0, den = 0
+    for (let i = 0; i < n; i++) { num += (xs[i] - xm) * (ys[i] - ym); den += (xs[i] - xm) ** 2 }
+    return den > 0 ? +(num / den).toFixed(1) : 0
+  }
+
   // Report global result when all 3 phrases are recorded
   useEffect(() => {
     if (!allDone) return
     const all = PHRASES.map(p => results[p.id].metrics)
+    const byPhrase = PHRASES.map(p => {
+      const r = results[p.id]
+      return { id: p.id, mean: r.metrics.mean, std: r.metrics.std, range: r.metrics.range, slope_final: slopeFinal(r.times, r.f0s) }
+    })
     onResult?.('prosody', {
-      f0_mean:  +(all.reduce((a, m) => a + m.mean,  0) / 3).toFixed(1),
-      f0_range: +(all.reduce((a, m) => a + m.range, 0) / 3).toFixed(1),
+      f0_mean:    +(all.reduce((a, m) => a + m.mean,  0) / 3).toFixed(1),
+      f0_range:   +(all.reduce((a, m) => a + m.range, 0) / 3).toFixed(1),
+      f0_std_avg: +(all.reduce((a, m) => a + m.std,   0) / 3).toFixed(1),
+      by_phrase:  byPhrase,
+      decl_falls: byPhrase[0].slope_final < -10,
+      int_rises:  byPhrase[1].slope_final >  10,
     })
   }, [allDone]) // eslint-disable-line
 

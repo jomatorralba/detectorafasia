@@ -1,15 +1,30 @@
 import { useState, useEffect } from 'react'
 import { Save, CheckCircle } from 'lucide-react'
-import { PALABRAS, NORM, STATUS, classify } from '../utils/normative'
+import { PALABRAS, STATUS, classify } from '../utils/normative'
 import { isConfigured } from '../lib/supabase'
 import { saveEvaluation, getEvaluations } from '../lib/db'
 
 const ROWS = [
-  { key: 'tmf_a',  label: 'TMF /A/',           mode: 'min',   fmt: v => `${v.toFixed(1)} s`,  ref: `≥ ${NORM.tmf_a.min} s` },
-  { key: 'tmf_s',  label: 'TMF /S/',           mode: 'min',   fmt: v => `${v.toFixed(1)} s`,  ref: `≥ ${NORM.tmf_s.min} s` },
-  { key: 'ratio',  label: 'Cociente S/A',      mode: 'range', fmt: v => v.toFixed(2),          ref: `${NORM.ratio.min} – ${NORM.ratio.max}` },
-  { key: 'ddk',    label: 'Diadococinesias',   mode: 'min',   fmt: v => `${v.toFixed(1)} /5s`, ref: `≥ ${NORM.ddk.min} rep/5s` },
-  { key: 'wpm',    label: 'Velocidad lectora', mode: 'min',   fmt: v => `${Math.round(v)} ppm`,ref: `≥ ${NORM.wpm.min} ppm` },
+  { key: 'tmf_a',  label: 'TMF /A/',           mode: 'min',   fmt: v => `${v.toFixed(1)} s`,  ref: '≥ 10 s' },
+  { key: 'tmf_s',  label: 'TMF /S/',           mode: 'min',   fmt: v => `${v.toFixed(1)} s`,  ref: '≥ 8 s' },
+  { key: 'ratio',  label: 'Cociente S/A',      mode: 'range', fmt: v => v.toFixed(2),          ref: '0.7 – 1.4' },
+  { key: 'ddk',    label: 'Diadococinesias',   mode: 'min',   fmt: v => `${v.toFixed(1)} /5s`, ref: '≥ 5 rep/5s' },
+  { key: 'wpm',    label: 'Velocidad lectora', mode: 'min',   fmt: v => `${Math.round(v)} ppm`,ref: '≥ 100 ppm' },
+]
+
+// Filas de calidad vocal — extraídas de results.voice_quality
+const VQ_ROWS = [
+  { sub: 'jitter',  label: 'Jitter',   mode: 'max', fmt: v => `${v.toFixed(2)} %`, ref: '< 1.04 %' },
+  { sub: 'shimmer', label: 'Shimmer',  mode: 'max', fmt: v => `${v.toFixed(2)} %`, ref: '< 3.81 %' },
+  { sub: 'hnr',     label: 'HNR',      mode: 'min', fmt: v => `${v.toFixed(1)} dB`, ref: '> 20 dB' },
+]
+
+// Filas de pausas — extraídas de results.pause_stats
+const PAUSE_ROWS = [
+  { sub: 'silence_pct',       label: '% silencio',          mode: 'range', fmt: v => `${(v*100).toFixed(0)} %`, ref: '15–25 %' },
+  { sub: 'num_pauses',        label: 'Nº pausas',            mode: null,    fmt: v => `${v}`,                    ref: null },
+  { sub: 'mean_pause_dur',    label: 'Pausa media',          mode: 'max',   fmt: v => `${v.toFixed(2)} s`,       ref: '< 0.6 s' },
+  { sub: 'articulation_rate', label: 'Tasa articulación',    mode: 'min',   fmt: v => `${v.toFixed(1)} síl/s`,   ref: '≥ 4.5 síl/s' },
 ]
 
 function SavePanel({ patient, results, onSaved }) {
@@ -145,10 +160,49 @@ export function Summary({ results, onReset, patient, onNewPatient }) {
     )
   }
 
-  const mainRows = ROWS.filter(r => results[r.key] != null)
+  const mainRows      = ROWS.filter(r => results[r.key] != null)
+  const vqData        = results.voice_quality
+  const pauseData     = results.pause_stats
+  const prosodyData   = results.prosody
+  const formantsData  = results.formants
   const palabrasEntries = Object.entries(results)
     .filter(([k]) => k.startsWith('palabra_'))
     .map(([k, v]) => [k.replace('palabra_', ''), v])
+
+  const SectionTable = ({ title, rows }) => (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
+        <h3 className="font-semibold text-sm text-gray-600 uppercase tracking-wide">{title}</h3>
+      </div>
+      <table className="w-full text-sm">
+        <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+          <tr>{['Medida', 'Resultado', 'Referencia', 'Estado'].map(h => (
+            <th key={h} className="px-5 py-2 text-left font-medium">{h}</th>
+          ))}</tr>
+        </thead>
+        <tbody>
+          {rows.map(({ label, value, mode, normKey, fmt, ref }) => {
+            const status = mode && normKey ? STATUS[classify(value, normKey, mode)] : null
+            return (
+              <tr key={label} className="border-t border-gray-50 hover:bg-gray-50/50">
+                <td className="px-5 py-3 font-semibold text-gray-800">{label}</td>
+                <td className="px-5 py-3 font-mono">{fmt(value)}</td>
+                <td className="px-5 py-3 text-gray-500">{ref || '—'}</td>
+                <td className="px-5 py-3">
+                  {status ? (
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${status.css}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${status.dot} shrink-0`}/>
+                      {status.label}
+                    </span>
+                  ) : '—'}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
 
   return (
     <div className="space-y-6">
@@ -216,6 +270,96 @@ export function Summary({ results, onReset, patient, onNewPatient }) {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Calidad vocal */}
+      {vqData && (
+        <SectionTable title="Calidad vocal (TMF /A/)" rows={VQ_ROWS.map(r => ({
+          label: r.label, value: vqData[r.sub], mode: r.mode, normKey: r.sub, fmt: r.fmt, ref: r.ref,
+        }))}/>
+      )}
+
+      {/* Pausas */}
+      {pauseData && (
+        <SectionTable title="Análisis de pausas (lectura)" rows={PAUSE_ROWS.map(r => ({
+          label: r.label, value: pauseData[r.sub], mode: r.mode, normKey: r.sub, fmt: r.fmt, ref: r.ref,
+        }))}/>
+      )}
+
+      {/* Prosodia ampliada */}
+      {prosodyData?.by_phrase && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
+            <h3 className="font-semibold text-sm text-gray-600 uppercase tracking-wide">Prosodia — detalle por frase</h3>
+          </div>
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+              <tr>{['Frase', 'F0 media', 'F0 rango', 'F0 std', 'Pendiente final'].map(h => (
+                <th key={h} className="px-5 py-2 text-left font-medium">{h}</th>
+              ))}</tr>
+            </thead>
+            <tbody>
+              {prosodyData.by_phrase.map(p => (
+                <tr key={p.id} className="border-t border-gray-50 hover:bg-gray-50/50">
+                  <td className="px-5 py-3 font-semibold text-gray-800 capitalize">{p.id}</td>
+                  <td className="px-5 py-3 font-mono">{p.mean} Hz</td>
+                  <td className="px-5 py-3 font-mono">{p.range} Hz</td>
+                  <td className="px-5 py-3 font-mono">{p.std} Hz</td>
+                  <td className="px-5 py-3 font-mono">
+                    <span className={p.slope_final > 10 ? 'text-orange-600' : p.slope_final < -10 ? 'text-teal-700' : 'text-gray-500'}>
+                      {p.slope_final > 0 ? '+' : ''}{p.slope_final} Hz/s
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Espacio vocálico */}
+      {formantsData && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
+            <h3 className="font-semibold text-sm text-gray-600 uppercase tracking-wide">Espacio vocálico (LPC)</h3>
+          </div>
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+              <tr>{['Vocal', 'F1', 'F2', 'F3'].map(h => (
+                <th key={h} className="px-5 py-2 text-left font-medium">{h}</th>
+              ))}</tr>
+            </thead>
+            <tbody>
+              {['a','i','u'].map(v => formantsData[v] && (
+                <tr key={v} className="border-t border-gray-50 hover:bg-gray-50/50">
+                  <td className="px-5 py-3 font-bold text-gray-800">/{v}/</td>
+                  <td className="px-5 py-3 font-mono">{formantsData[v].F1} Hz</td>
+                  <td className="px-5 py-3 font-mono">{formantsData[v].F2} Hz</td>
+                  <td className="px-5 py-3 font-mono text-gray-400">{formantsData[v].F3 ? `${formantsData[v].F3} Hz` : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {(formantsData.vsa || formantsData.fcr) && (
+            <div className="px-5 pb-4 pt-2 flex gap-6">
+              {formantsData.vsa && (
+                <div>
+                  <span className="text-xs text-gray-400 uppercase tracking-wide">VSA </span>
+                  <span className="font-mono font-bold text-gray-800">{formantsData.vsa.toLocaleString()} Hz²</span>
+                </div>
+              )}
+              {formantsData.fcr && (
+                <div>
+                  <span className="text-xs text-gray-400 uppercase tracking-wide">FCR </span>
+                  <span className={`font-mono font-bold ${formantsData.fcr > 1.20 ? 'text-red-600' : 'text-teal-700'}`}>
+                    {formantsData.fcr.toFixed(3)}
+                  </span>
+                  <span className="text-xs text-gray-400 ml-1">{formantsData.fcr > 1.20 ? '↑ centralización' : '✓ normal'}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

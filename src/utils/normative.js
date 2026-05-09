@@ -1,9 +1,22 @@
 export const NORM = {
+  // Aerodinámica fonatoria
   tmf_a: { min: 10 },
   tmf_s: { min: 8  },
   ratio: { min: 0.7, max: 1.4 },
+  // Diadococinesias
   ddk:   { min: 5  },
+  // Velocidad lectora
   wpm:   { min: 100 },
+  // Calidad vocal — Titze (1995); Boersma (1993)
+  jitter:  { max: 1.04 },   // % local — < 1.04 % normal
+  shimmer: { max: 3.81 },   // % local — < 3.81 % normal
+  hnr:     { min: 20   },   // dB      — > 20 dB normal
+  // Pausas en lectura — Tjaden & Wilding (2004); Duffy (2013)
+  silence_pct:       { min: 0.15, max: 0.25 },  // 15–25 % normal
+  mean_pause_dur:    { max: 0.6  },              // < 0.6 s normal
+  articulation_rate: { min: 4.5  },              // ≥ 4.5 síl/s normal
+  // Espacio vocálico — Sapir et al. (2010)
+  fcr: { max: 1.17 },  // < 1.17 normal; > 1.20 indica centralización vocálica
 }
 
 export const PALABRAS = {
@@ -25,13 +38,20 @@ export const ABUELO_WORDS = ABUELO_TEXT.split(' ').length
 
 export function classify(value, key, mode = 'min') {
   const n = NORM[key]
+  if (!n) return 'warn'
   if (mode === 'min') {
-    if (value >= n.min)         return 'good'
-    if (value >= n.min * 0.7)   return 'warn'
+    if (value >= n.min)        return 'good'
+    if (value >= n.min * 0.7)  return 'warn'
     return 'bad'
   }
-  if (value >= n.min && value <= n.max)                     return 'good'
-  if (value >= n.min * 0.7 && value <= n.max * 1.3)        return 'warn'
+  if (mode === 'max') {
+    if (value <= n.max)        return 'good'
+    if (value <= n.max * 1.4)  return 'warn'
+    return 'bad'
+  }
+  // range
+  if (value >= n.min && value <= n.max)               return 'good'
+  if (value >= n.min * 0.7 && value <= n.max * 1.3)  return 'warn'
   return 'bad'
 }
 

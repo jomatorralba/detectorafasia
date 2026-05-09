@@ -5,9 +5,10 @@ import { Waveform, LiveWaveform } from '../components/Waveform'
 import { Badge } from '../components/Badge'
 import { Gauge } from '../components/Gauge'
 import { decodeAudio, calcTMF, getWaveformPoints } from '../utils/audio'
+import { calcVoiceQuality } from '../utils/voiceQuality'
 import { classify } from '../utils/normative'
 
-function RecordBlock({ label, caption, color, normKey, normMin, onResult }) {
+function RecordBlock({ label, caption, color, normKey, normMin, onResult, extraCalc }) {
   const recorder = useRecorder()
   const [result, setResult]     = useState(null)
   const [waveData, setWaveData] = useState(null)
@@ -26,6 +27,7 @@ function RecordBlock({ label, caption, color, normKey, normMin, onResult }) {
         setResult({ tmf, duration })
         setWaveData({ points, duration })
         onResult(tmf)
+        if (extraCalc) extraCalc(channelData, sampleRate)
       } catch (e) { console.error(e) }
       if (!cancelled) setLoading(false)
     })()
@@ -82,6 +84,11 @@ export function TMF({ onResult }) {
   const handleA = v => { setTmfA(v); onResult('tmf_a', v) }
   const handleS = v => { setTmfS(v); onResult('tmf_s', v) }
 
+  const voiceQualityCalc = (channelData, sampleRate) => {
+    const vq = calcVoiceQuality(channelData, sampleRate)
+    if (vq) onResult('voice_quality', vq)
+  }
+
   const ratio = tmfA && tmfS && tmfA > 0 ? tmfS / tmfA : null
 
   return (
@@ -98,6 +105,7 @@ export function TMF({ onResult }) {
         <RecordBlock
           label="Vocal /A/" caption="Emitir A sostenida lo máximo posible"
           color="#1565C0" normKey="tmf_a" normMin={10} onResult={handleA}
+          extraCalc={voiceQualityCalc}
         />
         <RecordBlock
           label="Fricativa /S/" caption="Emitir S sostenida lo máximo posible"

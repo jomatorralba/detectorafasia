@@ -7,16 +7,18 @@ import { DDK }          from './pages/DDK'
 import { Abuelo }       from './pages/Abuelo'
 import { Palabras }     from './pages/Palabras'
 import { Prosodia }     from './pages/Prosodia'
+import { Vocales }      from './pages/Vocales'
 import { Summary }      from './pages/Summary'
 import { PatientsPage } from './pages/PatientsPage'
 import { isConfigured } from './lib/supabase'
 
 const PAGE_META = [
-  { title: 'Tiempo Máximo de Fonación',  desc: 'Duración de /A/ y /S/ sostenidas · cociente S/A' },
+  { title: 'Tiempo Máximo de Fonación',  desc: 'Duración de /A/ y /S/ sostenidas · cociente S/A · calidad vocal' },
   { title: 'Diadococinesias',            desc: 'Repetición de PA·TA·KA durante 5 segundos' },
-  { title: 'Lectura del Abuelo',         desc: 'Velocidad lectora en palabras por minuto' },
+  { title: 'Lectura del Abuelo',         desc: 'Velocidad lectora · análisis de pausas · tasa de articulación' },
   { title: 'Lectura de Palabras',        desc: 'Comparativa espectral con voz de referencia' },
   { title: 'Prosodia',                   desc: 'Variación de tono en tres modalidades de entonación' },
+  { title: 'Espacio Vocálico',           desc: 'Formantes F1/F2 de /a/ /i/ /u/ · VSA · FCR' },
   { title: 'Resumen',                    desc: 'Resultados de todas las pruebas completadas' },
 ]
 
@@ -52,7 +54,8 @@ export default function App() {
     results.ddk   != null,
     results.wpm   != null,
     Object.keys(results).some(k => k.startsWith('palabra_')),
-    results.prosody != null,
+    results.prosody  != null,
+    results.formants != null,
   ].filter(Boolean).length
 
   return (
@@ -107,7 +110,8 @@ export default function App() {
                 {tab === 2 && <Abuelo   onResult={onResult}/>}
                 {tab === 3 && <Palabras  onResult={onResult}/>}
                 {tab === 4 && <Prosodia  onResult={onResult}/>}
-                {tab === 5 && (
+                {tab === 5 && <Vocales   onResult={onResult}/>}
+                {tab === 6 && (
                   <Summary
                     key={`summary-${sessionKey}`}
                     results={results}

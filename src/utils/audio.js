@@ -101,6 +101,53 @@ export function gaussianRef(refDuration, recordedDuration, n = 200) {
   return { ref, times, tMax }
 }
 
+// Análisis de pausas en lectura de texto continuo
+// Ref: Tjaden & Wilding (2004); Duffy (2013) Motor Speech Disorders
+export function calcPauseStats(channelData, sampleRate, totalSyllables) {
+  const FL = Math.floor(0.025 * sampleRate)   // 25 ms
+  const HL = Math.floor(0.010 * sampleRate)   // 10 ms hop
+  const n  = Math.max(1, Math.floor((channelData.length - FL) / HL) + 1)
+
+  let maxRms = 0
+  const rms = new Float32Array(n)
+  for (let i = 0; i < n; i++) {
+    let s = 0
+    for (let j = 0; j < FL; j++) s += (channelData[i * HL + j] || 0) ** 2
+    rms[i] = Math.sqrt(s / FL)
+    if (rms[i] > maxRms) maxRms = rms[i]
+  }
+  if (maxRms === 0) return null
+
+  const thr = maxRms * 0.05
+  const voiced = Array.from(rms, v => v > thr ? 1 : 0)
+
+  // Agrupar runs de silencio ≥ 250 ms (excluyendo inicial y final)
+  const pauseMinFrames = Math.round(0.250 / 0.010)
+  const pauses = []
+  let i = 1  // saltar primer frame
+  while (i < voiced.length - 1) {
+    if (voiced[i] === 0) {
+      let j = i
+      while (j < voiced.length - 1 && voiced[j] === 0) j++
+      if (j - i >= pauseMinFrames) pauses.push((j - i) * HL / sampleRate)
+      i = j
+    } else {
+      i++
+    }
+  }
+
+  const totalDur    = channelData.length / sampleRate
+  const silenceDur  = voiced.filter(v => v === 0).length * HL / sampleRate
+  const speechDur   = Math.max(0.1, totalDur - silenceDur)
+
+  return {
+    silence_pct:       +( silenceDur / totalDur ).toFixed(3),
+    num_pauses:        pauses.length,
+    mean_pause_dur:    pauses.length > 0 ? +(pauses.reduce((a, b) => a + b, 0) / pauses.length).toFixed(2) : 0,
+    articulation_rate: +(totalSyllables / speechDur).toFixed(1),
+  }
+}
+
 export function getWaveformPoints(channelData, sampleRate, maxPoints = 3000) {
   const step = Math.max(1, Math.floor(channelData.length / maxPoints))
   const dur  = channelData.length / sampleRate
