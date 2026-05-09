@@ -39,7 +39,11 @@ export default function App() {
 
   const openPatientPanel = isConfigured ? () => setPatientPanelOpen(true) : undefined
 
-  const meta = PAGE_META[tab]
+  const handleTabChange = (t) => { setTab(t); setPatientPanelOpen(false) }
+
+  const meta = patientPanelOpen
+    ? { title: 'Pacientes', desc: 'Seleccionar, crear o ver historial de pacientes' }
+    : PAGE_META[tab]
 
   const doneCount = [
     results.tmf_a != null || results.tmf_s != null,
@@ -53,9 +57,10 @@ export default function App() {
       <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#fff' }}>
         <Sidebar
           active={tab}
-          onChange={setTab}
+          onChange={handleTabChange}
           doneCount={doneCount}
           onPatientsClick={openPatientPanel}
+          patientsActive={patientPanelOpen}
         />
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -90,31 +95,28 @@ export default function App() {
 
           {/* contenido scrollable */}
           <main style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
-            <div style={{ maxWidth: 680, margin: '0 auto' }}>
-              {tab === 0 && <TMF      onResult={onResult}/>}
-              {tab === 1 && <DDK      onResult={onResult}/>}
-              {tab === 2 && <Abuelo   onResult={onResult}/>}
-              {tab === 3 && <Palabras onResult={onResult}/>}
-              {tab === 4 && (
-                <Summary
-                  key={`summary-${sessionKey}`}
-                  results={results}
-                  onReset={onReset}
-                  patient={patient}
-                  onNewPatient={openPatientPanel}
-                />
-              )}
-            </div>
+            {patientPanelOpen ? (
+              <PatientsPage onSelectPatient={handleSelectPatient} embedded/>
+            ) : (
+              <div style={{ maxWidth: 680, margin: '0 auto' }}>
+                {tab === 0 && <TMF      onResult={onResult}/>}
+                {tab === 1 && <DDK      onResult={onResult}/>}
+                {tab === 2 && <Abuelo   onResult={onResult}/>}
+                {tab === 3 && <Palabras onResult={onResult}/>}
+                {tab === 4 && (
+                  <Summary
+                    key={`summary-${sessionKey}`}
+                    results={results}
+                    onReset={onReset}
+                    patient={patient}
+                    onNewPatient={openPatientPanel}
+                  />
+                )}
+              </div>
+            )}
           </main>
         </div>
       </div>
-
-      {/* Panel de pacientes — overlay a pantalla completa */}
-      {patientPanelOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#f4f6f8', overflowY: 'auto' }}>
-          <PatientsPage onSelectPatient={handleSelectPatient}/>
-        </div>
-      )}
 
       <Analytics/>
     </>

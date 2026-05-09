@@ -19,7 +19,7 @@ const TABS = [
   { id: 4, icon: <BarChart2 size={15} strokeWidth={1.6}/>,     label: 'Resumen',            sub: 'Resultados' },
 ]
 
-export function Sidebar({ active, onChange, doneCount, onPatientsClick }) {
+export function Sidebar({ active, onChange, doneCount, onPatientsClick, patientsActive }) {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
@@ -48,7 +48,7 @@ export function Sidebar({ active, onChange, doneCount, onPatientsClick }) {
 
       <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 0' }}>
         {TABS.map(tab => {
-          const isActive = active === tab.id
+          const isActive = active === tab.id && !patientsActive
           return (
             <button
               key={tab.id}
@@ -97,12 +97,13 @@ export function Sidebar({ active, onChange, doneCount, onPatientsClick }) {
               width: '100%', display: 'flex', alignItems: 'center', gap: 10,
               padding: collapsed ? '9px 0' : '9px 16px',
               justifyContent: collapsed ? 'center' : 'flex-start',
-              background: 'transparent', border: 'none',
-              color: C.muted, fontSize: 13, cursor: 'pointer',
+              background: patientsActive ? C.active : 'transparent', border: 'none',
+              borderRight: patientsActive ? '2px solid rgba(255,255,255,0.38)' : '2px solid transparent',
+              color: patientsActive ? C.text : C.muted, fontSize: 13, cursor: 'pointer',
               transition: 'background 0.12s, color 0.12s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = C.hover; e.currentTarget.style.color = C.text }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.muted }}
+            onMouseEnter={e => { if (!patientsActive) { e.currentTarget.style.background = C.hover; e.currentTarget.style.color = C.text } }}
+            onMouseLeave={e => { if (!patientsActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.muted } }}
           >
             <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
               <Users size={15} strokeWidth={1.6}/>

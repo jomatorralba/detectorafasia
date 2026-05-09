@@ -256,7 +256,7 @@ function CreateForm({ onSubmit, onCancel }) {
   )
 }
 
-export function PatientsPage({ onSelectPatient }) {
+export function PatientsPage({ onSelectPatient, embedded = false }) {
   const [patients,    setPatients]    = useState([])
   const [summaries,   setSummaries]   = useState({})
   const [loading,     setLoading]     = useState(true)
@@ -296,21 +296,9 @@ export function PatientsPage({ onSelectPatient }) {
 
   return (
     <>
-      <div style={{ minHeight: '100vh', background: '#f4f6f8', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ background: '#073447', padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <NiLogo size={28} color="white"/>
-          <div style={{ flex: 1, lineHeight: 1.2 }}>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Disartria</div>
-            <div style={{ color: 'rgba(255,255,255,0.42)', fontSize: 10, letterSpacing: '0.04em' }}>neuroinn</div>
-          </div>
-          <button onClick={() => setShowCreate(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: '#116b70', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-            <UserPlus size={14}/> Nuevo paciente
-          </button>
-        </div>
-
-        <div style={{ flex: 1, maxWidth: 680, width: '100%', margin: '0 auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ position: 'relative' }}>
+      <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ flex: 1, position: 'relative' }}>
             <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa', pointerEvents: 'none' }}/>
             <input
               value={search} onChange={e => setSearch(e.target.value)}
@@ -318,50 +306,54 @@ export function PatientsPage({ onSelectPatient }) {
               style={{ width: '100%', padding: '10px 12px 10px 34px', borderRadius: 10, border: '1px solid #d1d5db', background: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
-
-          {showCreate && <CreateForm onSubmit={handleCreate} onCancel={() => setShowCreate(false)}/>}
-
-          {loading ? (
-            <p style={{ textAlign: 'center', color: '#aaa', padding: 40 }}>Cargando pacientes…</p>
-          ) : error ? (
-            <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: '12px 16px' }}>
-              <p style={{ color: '#dc2626', fontSize: 13, margin: '0 0 6px' }}>Error: {error}</p>
-              <button onClick={load} style={{ color: '#dc2626', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>
-                Reintentar
-              </button>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-              <p style={{ color: '#aaa', marginBottom: 12 }}>
-                {search ? 'Sin resultados.' : 'Aún no hay pacientes.'}
-              </p>
-              {!search && (
-                <button onClick={() => setShowCreate(true)}
-                  style={{ padding: '8px 18px', borderRadius: 8, border: '1.5px dashed #d1d5db', background: 'none', color: '#999', cursor: 'pointer', fontSize: 13 }}>
-                  + Crear primer paciente
-                </button>
-              )}
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {filtered.map(p => (
-                <PatientCard
-                  key={p.id} patient={p}
-                  evalCount={summaries[p.id]?.count  ?? 0}
-                  lastEval= {summaries[p.id]?.lastDate ?? null}
-                  onEvaluate={() => onSelectPatient(p)}
-                  onHistory ={() => setHistoryFor(p)}
-                  onDelete  ={() => handleDelete(p)}
-                />
-              ))}
-            </div>
-          )}
-
-          <button onClick={() => onSelectPatient(null)}
-            style={{ background: 'none', border: '1.5px solid #d1d5db', borderRadius: 9, color: '#666', cursor: 'pointer', fontSize: 13, padding: '9px 20px', fontWeight: 500 }}>
-            Continuar sin seleccionar paciente →
+          <button onClick={() => setShowCreate(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', borderRadius: 10, border: 'none', background: '#073447', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
+            <UserPlus size={14}/> Nuevo paciente
           </button>
         </div>
+
+        {showCreate && <CreateForm onSubmit={handleCreate} onCancel={() => setShowCreate(false)}/>}
+
+        {loading ? (
+          <p style={{ textAlign: 'center', color: '#aaa', padding: 40 }}>Cargando pacientes…</p>
+        ) : error ? (
+          <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: '12px 16px' }}>
+            <p style={{ color: '#dc2626', fontSize: 13, margin: '0 0 6px' }}>Error: {error}</p>
+            <button onClick={load} style={{ color: '#dc2626', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>
+              Reintentar
+            </button>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <p style={{ color: '#aaa', marginBottom: 12 }}>
+              {search ? 'Sin resultados.' : 'Aún no hay pacientes.'}
+            </p>
+            {!search && (
+              <button onClick={() => setShowCreate(true)}
+                style={{ padding: '8px 18px', borderRadius: 8, border: '1.5px dashed #d1d5db', background: 'none', color: '#999', cursor: 'pointer', fontSize: 13 }}>
+                + Crear primer paciente
+              </button>
+            )}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {filtered.map(p => (
+              <PatientCard
+                key={p.id} patient={p}
+                evalCount={summaries[p.id]?.count  ?? 0}
+                lastEval= {summaries[p.id]?.lastDate ?? null}
+                onEvaluate={() => onSelectPatient(p)}
+                onHistory ={() => setHistoryFor(p)}
+                onDelete  ={() => handleDelete(p)}
+              />
+            ))}
+          </div>
+        )}
+
+        <button onClick={() => onSelectPatient(null)}
+          style={{ background: 'none', border: '1.5px solid #d1d5db', borderRadius: 9, color: '#666', cursor: 'pointer', fontSize: 13, padding: '9px 20px', fontWeight: 500 }}>
+          Continuar sin seleccionar paciente →
+        </button>
       </div>
 
       {historyFor && (
