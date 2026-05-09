@@ -60,13 +60,12 @@ function yinPitch(frame, sr) {
 }
 
 function extractF0(pcm, sr) {
-  const FN = Math.round(sr * 0.025) // 25 ms frame
+  const FN = Math.round(sr * 0.040) // 40 ms frame (necesario para que hi < W/2 a 48kHz)
   const HN = Math.round(sr * 0.010) // 10 ms hop
   const times = [], raw = []
 
   for (let i = 0; i + FN <= pcm.length; i += HN) {
     const frame = pcm.subarray(i, i + FN)
-    // Skip silence (RMS < 0.002)
     let rms = 0
     for (let k = 0; k < frame.length; k++) rms += frame[k] * frame[k]
     if (Math.sqrt(rms / frame.length) < 0.002) continue
@@ -75,10 +74,20 @@ function extractF0(pcm, sr) {
     if (f0 > 0) { times.push(+(i / sr).toFixed(3)); raw.push(+f0.toFixed(1)) }
   }
 
-  // Median smooth (window = 5) to remove transient spikes
-  const f0s = raw.map((_, i) => {
-    const s = raw.slice(Math.max(0, i - 2), i + 3).sort((a, b) => a - b)
+  // Median smooth (window = 9) para reducir ruido
+  const smoothed = raw.map((_, i) => {
+    const s = raw.slice(Math.max(0, i - 4), i + 5).sort((a, b) => a - b)
     return s[Math.floor(s.length / 2)]
+  })
+
+  // Corrección de errores de octava: si un frame salta >1.8x o <0.6x respecto
+  // a sus vecinos, probablemente YIN detectó el doble o la mitad de la frecuencia real
+  const f0s = smoothed.map((v, i) => {
+    if (i === 0 || i === smoothed.length - 1) return v
+    const ref = (smoothed[i - 1] + smoothed[i + 1]) / 2
+    if (v > ref * 1.8 && v / 2 > 60)  return +(v / 2).toFixed(1)
+    if (v < ref * 0.6 && v * 2 < 550) return +(v * 2).toFixed(1)
+    return v
   })
 
   return { times, f0s }
@@ -154,8 +163,13 @@ function F0Chart({ times, f0s, phraseId }) {
   const W = 460, H = 120, pl = 40, pt = 10, pr = 10, pb = 24
   const iW = W - pl - pr, iH = H - pt - pb
 
-  const minF = Math.max(50,  Math.min(...f0s) - 15)
-  const maxF = Math.min(550, Math.max(...f0s) + 15)
+  // Usar percentiles p10/p90 para el rango del eje Y — ignora outliers y
+  // da un eje más estable entre grabaciones del mismo hablante
+  const sorted = [...f0s].sort((a, b) => a - b)
+  const p10 = sorted[Math.floor(sorted.length * 0.10)]
+  const p90 = sorted[Math.floor(sorted.length * 0.90)]
+  const minF = Math.max(50,  p10 - 30)
+  const maxF = Math.min(500, p90 + 30)
   const dur  = times[times.length - 1] || 1
 
   const tx = t  => pl + (t / dur) * iW
