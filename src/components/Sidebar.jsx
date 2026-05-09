@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Timer, AudioLines, BookOpen, AudioWaveform, BarChart2 } from 'lucide-react'
+import { Timer, AudioLines, BookOpen, AudioWaveform, BarChart2, Users } from 'lucide-react'
 import { NiLogo } from './NiLogo'
 
 const C = {
@@ -19,7 +19,7 @@ const TABS = [
   { id: 4, icon: <BarChart2 size={15} strokeWidth={1.6}/>,     label: 'Resumen',            sub: 'Resultados' },
 ]
 
-export function Sidebar({ active, onChange, doneCount }) {
+export function Sidebar({ active, onChange, doneCount, onPatientsClick }) {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
@@ -86,6 +86,36 @@ export function Sidebar({ active, onChange, doneCount }) {
           )
         })}
       </nav>
+
+      {/* Botón pacientes — anclado abajo */}
+      {onPatientsClick && (
+        <div style={{ borderTop: `1px solid ${C.border}` }}>
+          <button
+            onClick={onPatientsClick}
+            title={collapsed ? 'Pacientes' : undefined}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+              padding: collapsed ? '9px 0' : '9px 16px',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              background: 'transparent', border: 'none',
+              color: C.muted, fontSize: 13, cursor: 'pointer',
+              transition: 'background 0.12s, color 0.12s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = C.hover; e.currentTarget.style.color = C.text }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.muted }}
+          >
+            <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+              <Users size={15} strokeWidth={1.6}/>
+            </span>
+            {!collapsed && (
+              <div style={{ minWidth: 0 }}>
+                <div style={{ lineHeight: 1.3 }}>Pacientes</div>
+                <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.2 }}>Gestión</div>
+              </div>
+            )}
+          </button>
+        </div>
+      )}
 
       {!collapsed && doneCount > 0 && (
         <div style={{ padding: '8px 16px', borderTop: `1px solid ${C.border}` }}>

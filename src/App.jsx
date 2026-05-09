@@ -19,10 +19,11 @@ const PAGE_META = [
 ]
 
 export default function App() {
-  const [tab,        setTab]        = useState(0)
-  const [results,    setResults]    = useState({})
-  const [patient,    setPatient]    = useState(null)
-  const [sessionKey, setSessionKey] = useState(0)
+  const [tab,              setTab]              = useState(0)
+  const [results,          setResults]          = useState({})
+  const [patient,          setPatient]          = useState(null)
+  const [sessionKey,       setSessionKey]       = useState(0)
+  const [patientPanelOpen, setPatientPanelOpen] = useState(false)
 
   const onResult = useCallback((key, value) => {
     setResults(r => ({ ...r, [key]: value }))
@@ -30,18 +31,13 @@ export default function App() {
 
   const onReset = () => { setResults({}); setTab(0); setSessionKey(k => k + 1) }
 
-  const onNewPatient = isConfigured
-    ? () => { setResults({}); setTab(0); setSessionKey(k => k + 1); setPatient(null) }
-    : undefined
-
-  if (isConfigured && !patient) {
-    return (
-      <>
-        <PatientsPage onSelectPatient={setPatient}/>
-        <Analytics/>
-      </>
-    )
+  const handleSelectPatient = (p) => {
+    setResults({}); setTab(0); setSessionKey(k => k + 1)
+    setPatient(p)
+    setPatientPanelOpen(false)
   }
+
+  const openPatientPanel = isConfigured ? () => setPatientPanelOpen(true) : undefined
 
   const meta = PAGE_META[tab]
 
@@ -55,9 +51,15 @@ export default function App() {
   return (
     <>
       <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#fff' }}>
-        <Sidebar active={tab} onChange={setTab} doneCount={doneCount}/>
+        <Sidebar
+          active={tab}
+          onChange={setTab}
+          doneCount={doneCount}
+          onPatientsClick={openPatientPanel}
+        />
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* cabecera */}
           <header style={{ padding: '14px 32px', borderBottom: '1px solid #f0f0f0', flexShrink: 0, background: '#fff' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
@@ -66,21 +68,27 @@ export default function App() {
                 </h1>
                 <p style={{ margin: '2px 0 0', fontSize: 13, color: '#888' }}>{meta.desc}</p>
               </div>
-              {patient && (
+              {patient ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 2, flexShrink: 0 }}>
                   <User size={13} color="#116b70"/>
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#116b70' }}>{patient.name}</span>
-                  {onNewPatient && (
-                    <button onClick={onNewPatient}
+                  {openPatientPanel && (
+                    <button onClick={openPatientPanel}
                       style={{ fontSize: 11, color: '#bbb', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 2 }}>
                       cambiar
                     </button>
                   )}
                 </div>
-              )}
+              ) : isConfigured ? (
+                <button onClick={openPatientPanel}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, padding: '5px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', color: '#555', cursor: 'pointer', fontSize: 12, flexShrink: 0 }}>
+                  <User size={12}/> Seleccionar paciente
+                </button>
+              ) : null}
             </div>
           </header>
 
+          {/* contenido scrollable */}
           <main style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
             <div style={{ maxWidth: 680, margin: '0 auto' }}>
               {tab === 0 && <TMF      onResult={onResult}/>}
@@ -93,13 +101,21 @@ export default function App() {
                   results={results}
                   onReset={onReset}
                   patient={patient}
-                  onNewPatient={onNewPatient}
+                  onNewPatient={openPatientPanel}
                 />
               )}
             </div>
           </main>
         </div>
       </div>
+
+      {/* Panel de pacientes — overlay a pantalla completa */}
+      {patientPanelOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#f4f6f8', overflowY: 'auto' }}>
+          <PatientsPage onSelectPatient={handleSelectPatient}/>
+        </div>
+      )}
+
       <Analytics/>
     </>
   )

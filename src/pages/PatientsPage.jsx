@@ -139,7 +139,7 @@ function HistoryModal({ patient, onClose, onEvaluate }) {
                 <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#116b70', flexShrink: 0, marginTop: 5 }}/>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#222' }}>{dateStr} · {timeStr}</div>
-                  {ev.notes && <p style={{ fontSize: 12, color: '#777', margin: '3px 0 5px', fontStyle: 'italic' }}>"{ev.notes}"</p>}
+                  {ev.notes && <p style={{ fontSize: 12, color: '#777', margin: '3px 0 5px', fontStyle: 'italic' }}>"{ ev.notes}"</p>}
                   {metrics.length > 0 && (
                     <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                       {metrics.map(m => (
@@ -358,8 +358,8 @@ export function PatientsPage({ onSelectPatient }) {
           )}
 
           <button onClick={() => onSelectPatient(null)}
-            style={{ background: 'none', border: 'none', color: '#bbb', cursor: 'pointer', fontSize: 12, padding: '6px 0', textDecoration: 'underline' }}>
-            Continuar sin seleccionar paciente
+            style={{ background: 'none', border: '1.5px solid #d1d5db', borderRadius: 9, color: '#666', cursor: 'pointer', fontSize: 13, padding: '9px 20px', fontWeight: 500 }}>
+            Continuar sin seleccionar paciente →
           </button>
         </div>
       </div>

@@ -1,19 +1,19 @@
-// Neuroinn isotipo: la "d" con brazo curvo y punto + barra "i"
 export function NiLogo({ size = 28, color = 'white' }) {
   return (
-    <svg width={size} height={Math.round(size * 48 / 50)} viewBox="0 0 50 48" fill="none">
-      {/* anillo 'o' con agujero (evenodd) */}
+    <svg width={size} height={Math.round(size * 118 / 100)} viewBox="0 0 100 118" fill="none">
+      {/* "o" donut — círculo exterior + oval interior, evenodd crea el hueco */}
       <path
         fillRule="evenodd" clipRule="evenodd"
-        d="M16,19 A12,12 0,0,1 16,43 A12,12 0,0,1 16,19 Z M16,24.5 A6.5,6.5 0,0,1 16,37.5 A6.5,6.5 0,0,1 16,24.5 Z"
+        d="M36,46 A32,32 0 1 0 36,110 A32,32 0 1 0 36,46 Z
+           M36,60 A14,18 0 1 0 36,96  A14,18 0 1 0 36,60  Z"
         fill={color}
       />
       {/* brazo curvo del anillo al punto */}
-      <path d="M24,23 C29,14 35,8 40,5.5" stroke={color} strokeWidth="4.5" strokeLinecap="round" fill="none"/>
-      {/* punto superior (cabeza de la 'i') */}
-      <circle cx="40" cy="5.5" r="4.5" fill={color}/>
-      {/* barra de la 'i' */}
-      <rect x="36.25" y="13" width="7.5" height="30" rx="3.75" fill={color}/>
+      <path d="M60,55 C68,38 76,24 82,18" stroke={color} strokeWidth="10" strokeLinecap="round" fill="none"/>
+      {/* punto de la i */}
+      <circle cx="82" cy="13" r="11" fill={color}/>
+      {/* barra de la i */}
+      <rect x="75.5" y="34" width="13" height="62" rx="6.5" fill={color}/>
     </svg>
   )
 }
