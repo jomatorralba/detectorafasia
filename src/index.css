@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --ni-teal: #116b70;
+  --ni-navy: #073447;
+}
+
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
 

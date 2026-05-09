@@ -9,13 +9,11 @@ export function RecordButton({ isRecording, elapsed, onStart, onStop }) {
       <button
         onClick={isRecording ? onStop : onStart}
         className={`relative w-20 h-20 rounded-full flex flex-col items-center justify-center
-          text-white font-bold shadow-lg transition-all duration-150 active:scale-95
-          ${isRecording
-            ? 'bg-red-500 hover:bg-red-600'
-            : 'bg-blue-600 hover:bg-blue-700'}`}
+          text-white font-bold shadow-lg transition-all duration-150 active:scale-95`}
+        style={{ background: isRecording ? '#dc2626' : '#116b70' }}
       >
         {isRecording && (
-          <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-30" />
+          <span className="absolute inset-0 rounded-full animate-ping opacity-25" style={{ background: '#dc2626' }} />
         )}
         <span className="relative z-10">
           {isRecording

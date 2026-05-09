@@ -46,9 +46,9 @@ export function DDK({ onResult }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-blue-50 border-l-4 border-blue-500 rounded-r-xl p-4">
-        <p className="font-semibold text-blue-900 text-sm">Instrucciones para el paciente</p>
-        <p className="text-blue-800 text-sm mt-1">
+      <div style={{ background: "#e8f4f4", borderLeft: "4px solid #116b70", borderRadius: "0 12px 12px 0", padding: 16 }}>
+        <p className="font-semibold text-sm" style={{ color: "#073447" }}>Instrucciones para el paciente</p>
+        <p className="text-sm mt-1" style={{ color: "#0e5a5e" }}>
           Tome aire y repita <strong>PA · TA · KA</strong> tan rápido y claro como pueda
           durante <strong>5 segundos</strong>. Pulse stop al terminar.
         </p>
