@@ -443,7 +443,7 @@ export function Palabras({ onResult }) {
                     )}
                   </div>
                 </div>
-                )()
+                )
               })()}
             </div>
           )}
