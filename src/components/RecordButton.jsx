@@ -10,7 +10,7 @@ export function RecordButton({ isRecording, elapsed, onStart, onStop }) {
         onClick={isRecording ? onStop : onStart}
         className={`relative w-20 h-20 rounded-full flex flex-col items-center justify-center
           text-white font-bold shadow-lg transition-all duration-150 active:scale-95`}
-        style={{ background: isRecording ? '#dc2626' : '#116b70' }}
+        style={{ background: isRecording ? '#b91c1c' : '#dc2626', boxShadow: isRecording ? 'none' : '0 0 0 4px rgba(220,38,38,0.15)' }}
       >
         {isRecording && (
           <span className="absolute inset-0 rounded-full animate-ping opacity-25" style={{ background: '#dc2626' }} />

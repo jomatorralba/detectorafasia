@@ -1,11 +1,14 @@
 import { useState, useCallback } from 'react'
 import { Analytics } from '@vercel/analytics/react'
-import { Sidebar }  from './components/Sidebar'
-import { TMF }      from './pages/TMF'
-import { DDK }      from './pages/DDK'
-import { Abuelo }   from './pages/Abuelo'
-import { Palabras } from './pages/Palabras'
-import { Summary }  from './pages/Summary'
+import { User } from 'lucide-react'
+import { Sidebar }      from './components/Sidebar'
+import { TMF }          from './pages/TMF'
+import { DDK }          from './pages/DDK'
+import { Abuelo }       from './pages/Abuelo'
+import { Palabras }     from './pages/Palabras'
+import { Summary }      from './pages/Summary'
+import { PatientsPage } from './pages/PatientsPage'
+import { isConfigured } from './lib/supabase'
 
 const PAGE_META = [
   { title: 'Tiempo Máximo de Fonación',  desc: 'Duración de /A/ y /S/ sostenidas · cociente S/A' },
@@ -16,22 +19,31 @@ const PAGE_META = [
 ]
 
 export default function App() {
-  const [tab, setTab]         = useState(0)
-  const [results, setResults] = useState({})
+  const [tab,        setTab]        = useState(0)
+  const [results,    setResults]    = useState({})
+  const [patient,    setPatient]    = useState(null)
+  const [sessionKey, setSessionKey] = useState(0)
 
   const onResult = useCallback((key, value) => {
     setResults(r => ({ ...r, [key]: value }))
   }, [])
 
-  const onReset = () => { setResults({}); setTab(0) }
+  const onReset = () => { setResults({}); setTab(0); setSessionKey(k => k + 1) }
 
-  const pages = [
-    <TMF      key="tmf"      onResult={onResult} />,
-    <DDK      key="ddk"      onResult={onResult} />,
-    <Abuelo   key="abuelo"   onResult={onResult} />,
-    <Palabras key="palabras" onResult={onResult} />,
-    <Summary  key="summary"  results={results} onReset={onReset} />,
-  ]
+  const onNewPatient = isConfigured
+    ? () => { setResults({}); setTab(0); setSessionKey(k => k + 1); setPatient(null) }
+    : undefined
+
+  if (isConfigured && !patient) {
+    return (
+      <>
+        <PatientsPage onSelectPatient={setPatient}/>
+        <Analytics/>
+      </>
+    )
+  }
+
+  const meta = PAGE_META[tab]
 
   const doneCount = [
     results.tmf_a != null || results.tmf_s != null,
@@ -40,36 +52,55 @@ export default function App() {
     Object.keys(results).some(k => k.startsWith('palabra_')),
   ].filter(Boolean).length
 
-  const meta = PAGE_META[tab]
-
   return (
     <>
       <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#fff' }}>
-        <Sidebar active={tab} onChange={setTab} doneCount={doneCount} />
+        <Sidebar active={tab} onChange={setTab} doneCount={doneCount}/>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {/* Page header */}
-          <header style={{
-            padding: '16px 32px',
-            borderBottom: '1px solid #f0f0f0',
-            flexShrink: 0,
-            background: '#fff',
-          }}>
-            <h1 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: '#111', lineHeight: 1.3 }}>
-              {meta.title}
-            </h1>
-            <p style={{ margin: '2px 0 0', fontSize: 13, color: '#888' }}>{meta.desc}</p>
+          <header style={{ padding: '14px 32px', borderBottom: '1px solid #f0f0f0', flexShrink: 0, background: '#fff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h1 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: '#111', lineHeight: 1.3 }}>
+                  {meta.title}
+                </h1>
+                <p style={{ margin: '2px 0 0', fontSize: 13, color: '#888' }}>{meta.desc}</p>
+              </div>
+              {patient && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 2, flexShrink: 0 }}>
+                  <User size={13} color="#116b70"/>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#116b70' }}>{patient.name}</span>
+                  {onNewPatient && (
+                    <button onClick={onNewPatient}
+                      style={{ fontSize: 11, color: '#bbb', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 2 }}>
+                      cambiar
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </header>
 
-          {/* Scrollable content */}
           <main style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
             <div style={{ maxWidth: 680, margin: '0 auto' }}>
-              {pages[tab]}
+              {tab === 0 && <TMF      onResult={onResult}/>}
+              {tab === 1 && <DDK      onResult={onResult}/>}
+              {tab === 2 && <Abuelo   onResult={onResult}/>}
+              {tab === 3 && <Palabras onResult={onResult}/>}
+              {tab === 4 && (
+                <Summary
+                  key={`summary-${sessionKey}`}
+                  results={results}
+                  onReset={onReset}
+                  patient={patient}
+                  onNewPatient={onNewPatient}
+                />
+              )}
             </div>
           </main>
         </div>
       </div>
-      <Analytics />
+      <Analytics/>
     </>
   )
 }

@@ -1,26 +1,15 @@
 import { useState } from 'react'
 import { Timer, AudioLines, BookOpen, AudioWaveform, BarChart2 } from 'lucide-react'
+import { NiLogo } from './NiLogo'
 
-// Brand colors
 const C = {
-  bg:      '#073447',   // Neuroinn navy (Pantone 303C)
-  teal:    '#116b70',   // Neuroinn teal (Pantone 7716C)
-  border:  'rgba(255,255,255,0.09)',
-  hover:   'rgba(255,255,255,0.06)',
-  active:  'rgba(17,107,112,0.18)',
-  text:    'rgba(255,255,255,0.9)',
-  muted:   'rgba(255,255,255,0.42)',
+  bg:     '#073447',
+  border: 'rgba(255,255,255,0.09)',
+  hover:  'rgba(255,255,255,0.05)',
+  active: 'rgba(255,255,255,0.10)',
+  text:   'rgba(255,255,255,0.92)',
+  muted:  'rgba(255,255,255,0.42)',
 }
-
-// Neuroinn isotope: three overlapping circles (neural network symbol)
-const Isotope = ({ size = 26 }) => (
-  <svg width={size} height={size * 0.88} viewBox="0 0 26 23" fill="none"
-    stroke={C.teal} strokeWidth="1.5" strokeLinecap="round">
-    <circle cx="8.5"  cy="15" r="7"/>
-    <circle cx="17.5" cy="15" r="7"/>
-    <circle cx="13"   cy="8"  r="6.5"/>
-  </svg>
-)
 
 const TABS = [
   { id: 0, icon: <Timer size={15} strokeWidth={1.6}/>,         label: 'TMF',                sub: 'Fonación máxima' },
@@ -38,14 +27,13 @@ export function Sidebar({ active, onChange, doneCount }) {
       className="flex flex-col shrink-0 h-screen transition-all duration-200 ease-in-out"
       style={{ width: collapsed ? 52 : 220, background: C.bg, borderRight: `1px solid ${C.border}` }}
     >
-      {/* Logo */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: collapsed ? '13px 12px' : '13px 16px',
         borderBottom: `1px solid ${C.border}`,
         justifyContent: collapsed ? 'center' : 'flex-start',
       }}>
-        <Isotope size={26} />
+        <NiLogo size={26} color="white"/>
         {!collapsed && (
           <div style={{ lineHeight: 1.2 }}>
             <div style={{ color: C.text, fontWeight: 700, fontSize: 14, letterSpacing: '-0.2px' }}>
@@ -58,7 +46,6 @@ export function Sidebar({ active, onChange, doneCount }) {
         )}
       </div>
 
-      {/* Navigation */}
       <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 0' }}>
         {TABS.map(tab => {
           const isActive = active === tab.id
@@ -72,7 +59,7 @@ export function Sidebar({ active, onChange, doneCount }) {
                 padding: collapsed ? '9px 0' : '9px 16px',
                 justifyContent: collapsed ? 'center' : 'flex-start',
                 background: isActive ? C.active : 'transparent',
-                borderRight: isActive ? `2px solid ${C.teal}` : '2px solid transparent',
+                borderRight: isActive ? '2px solid rgba(255,255,255,0.38)' : '2px solid transparent',
                 color: isActive ? C.text : C.muted,
                 fontSize: 13, cursor: 'pointer', textAlign: 'left',
                 transition: 'background 0.12s, color 0.12s',
@@ -100,7 +87,6 @@ export function Sidebar({ active, onChange, doneCount }) {
         })}
       </nav>
 
-      {/* Progress bar */}
       {!collapsed && doneCount > 0 && (
         <div style={{ padding: '8px 16px', borderTop: `1px solid ${C.border}` }}>
           <div style={{
@@ -110,7 +96,7 @@ export function Sidebar({ active, onChange, doneCount }) {
             <div style={{ flex: 1, background: 'rgba(255,255,255,0.1)', borderRadius: 4, height: 3 }}>
               <div style={{
                 width: `${(doneCount / 4) * 100}%`,
-                background: C.teal, height: 3, borderRadius: 4, transition: 'width 0.3s',
+                background: 'rgba(255,255,255,0.55)', height: 3, borderRadius: 4, transition: 'width 0.3s',
               }} />
             </div>
             <span style={{ color: C.muted, fontSize: 11, whiteSpace: 'nowrap' }}>{doneCount}/4</span>
@@ -118,7 +104,6 @@ export function Sidebar({ active, onChange, doneCount }) {
         </div>
       )}
 
-      {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed(c => !c)}
         style={{
@@ -142,14 +127,10 @@ export function Sidebar({ active, onChange, doneCount }) {
         {!collapsed && 'Contraer'}
       </button>
 
-      {/* Credit footer */}
       {!collapsed && (
-        <div style={{
-          padding: '8px 16px 10px',
-          borderTop: `1px solid ${C.border}`,
-        }}>
+        <div style={{ padding: '8px 16px 10px', borderTop: `1px solid ${C.border}` }}>
           <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.22)', lineHeight: 1.6, letterSpacing: '0.01em' }}>
-            <span style={{ color: C.teal, fontWeight: 600, fontSize: 9, letterSpacing: '0.06em' }}>
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 600, fontSize: 9, letterSpacing: '0.06em' }}>
               NEUROINN
             </span>
             {' '}Rehabilitación Neurológica
