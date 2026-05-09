@@ -6,6 +6,7 @@ import { TMF }          from './pages/TMF'
 import { DDK }          from './pages/DDK'
 import { Abuelo }       from './pages/Abuelo'
 import { Palabras }     from './pages/Palabras'
+import { Prosodia }     from './pages/Prosodia'
 import { Summary }      from './pages/Summary'
 import { PatientsPage } from './pages/PatientsPage'
 import { isConfigured } from './lib/supabase'
@@ -15,6 +16,7 @@ const PAGE_META = [
   { title: 'Diadococinesias',            desc: 'Repetición de PA·TA·KA durante 5 segundos' },
   { title: 'Lectura del Abuelo',         desc: 'Velocidad lectora en palabras por minuto' },
   { title: 'Lectura de Palabras',        desc: 'Comparativa espectral con voz de referencia' },
+  { title: 'Prosodia',                   desc: 'Variación de tono en tres modalidades de entonación' },
   { title: 'Resumen',                    desc: 'Resultados de todas las pruebas completadas' },
 ]
 
@@ -50,6 +52,7 @@ export default function App() {
     results.ddk   != null,
     results.wpm   != null,
     Object.keys(results).some(k => k.startsWith('palabra_')),
+    results.prosody != null,
   ].filter(Boolean).length
 
   return (
@@ -102,8 +105,9 @@ export default function App() {
                 {tab === 0 && <TMF      onResult={onResult}/>}
                 {tab === 1 && <DDK      onResult={onResult}/>}
                 {tab === 2 && <Abuelo   onResult={onResult}/>}
-                {tab === 3 && <Palabras onResult={onResult}/>}
-                {tab === 4 && (
+                {tab === 3 && <Palabras  onResult={onResult}/>}
+                {tab === 4 && <Prosodia  onResult={onResult}/>}
+                {tab === 5 && (
                   <Summary
                     key={`summary-${sessionKey}`}
                     results={results}
