@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Timer, AudioLines, BookOpen, AudioWaveform, BarChart2, Users } from 'lucide-react'
-import { NiLogo } from './NiLogo'
+import { NiLogo, NeuroinnWordmark } from './NiLogo'
 
 const C = {
   bg:     '#073447',
@@ -28,22 +28,15 @@ export function Sidebar({ active, onChange, doneCount, onPatientsClick, patients
       style={{ width: collapsed ? 52 : 220, background: C.bg, borderRight: `1px solid ${C.border}` }}
     >
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: collapsed ? '13px 12px' : '13px 16px',
+        display: 'flex', alignItems: 'center',
+        padding: collapsed ? '13px 12px' : '12px 16px',
         borderBottom: `1px solid ${C.border}`,
         justifyContent: collapsed ? 'center' : 'flex-start',
       }}>
-        <NiLogo size={26} color="white"/>
-        {!collapsed && (
-          <div style={{ lineHeight: 1.2 }}>
-            <div style={{ color: C.text, fontWeight: 700, fontSize: 14, letterSpacing: '-0.2px' }}>
-              Disartria
-            </div>
-            <div style={{ color: C.muted, fontSize: 10, letterSpacing: '0.04em', marginTop: 1 }}>
-              neuroinn
-            </div>
-          </div>
-        )}
+        {collapsed
+          ? <NiLogo size={26} color="white"/>
+          : <NeuroinnWordmark height={34}/>
+        }
       </div>
 
       <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 0' }}>
