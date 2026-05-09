@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Timer, AudioLines, BookOpen, AudioWaveform, BarChart2, Users, Activity } from 'lucide-react'
-import { NiLogo, NeuroinnWordmark } from './NiLogo'
+import { NiLogo } from './NiLogo'
 
 const C = {
-  bg:     '#073447',
+  bg:     '#0d3347',
   border: 'rgba(255,255,255,0.09)',
   hover:  'rgba(255,255,255,0.05)',
   active: 'rgba(255,255,255,0.10)',
@@ -36,7 +36,7 @@ export function Sidebar({ active, onChange, doneCount, onPatientsClick, patients
       }}>
         {collapsed
           ? <NiLogo size={26} color="white"/>
-          : <NeuroinnWordmark height={34}/>
+          : <img src="/logo-neuroinn.png" alt="neuroinn" style={{ height: 36, maxWidth: 188, objectFit: 'contain', objectPosition: 'left center', display: 'block' }}/>
         }
       </div>
 
