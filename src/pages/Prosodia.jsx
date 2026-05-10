@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Mic, Square, RotateCcw, CheckCircle2, AlertCircle } from 'lucide-react'
+import { yinPitch } from '../utils/yin.js'
 
 // ─── Phrase definitions ───────────────────────────────────────────────
 
@@ -26,8 +27,6 @@ const PHRASES = [
     color: '#b91c1c',
   },
 ]
-
-import { yinPitch } from '../utils/yin.js'
 
 function extractF0(pcm, sr) {
   const FN = Math.round(sr * 0.040) // 40 ms frame (necesario para que hi < W/2 a 48kHz)
