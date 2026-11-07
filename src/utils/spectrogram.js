@@ -1,12 +1,12 @@
 /* Hanning window */
-function hanning(n) {
+export function hanning(n) {
   const w = new Float32Array(n)
   for (let i = 0; i < n; i++) w[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (n - 1)))
   return w
 }
 
 /* Radix-2 Cooley-Tukey FFT — returns magnitude of first n/2 bins */
-function rfft(input) {
+export function rfft(input) {
   const n = input.length
   const re = new Float64Array(n)
   const im = new Float64Array(n)
@@ -73,7 +73,7 @@ export function findOnsetFrame(frames, threshold = 0.05) {
 }
 
 /* Magma colormap (black → purple → orange → white) — for patient */
-function magmaColor(t) {
+export function magmaColor(t) {
   const stops = [[0,0,4],[87,15,110],[187,55,84],[249,142,9],[252,253,191]]
   t = Math.max(0, Math.min(1, t))
   const pos = t * (stops.length - 1)

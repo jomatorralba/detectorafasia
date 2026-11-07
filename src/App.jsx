@@ -8,6 +8,7 @@ import { Abuelo }       from './pages/Abuelo'
 import { Palabras }     from './pages/Palabras'
 import { Prosodia }     from './pages/Prosodia'
 import { Vocales }      from './pages/Vocales'
+import { EnDirecto }    from './pages/EnDirecto'
 import { Summary }      from './pages/Summary'
 import { PatientsPage } from './pages/PatientsPage'
 import { isConfigured } from './lib/supabase'
@@ -20,6 +21,7 @@ const PAGE_META = [
   { title: 'Prosodia',                   desc: 'Variación de tono en tres modalidades de entonación' },
   { title: 'Espacio Vocálico',           desc: 'Formantes F1/F2 de /a/ /i/ /u/ · VSA · FCR' },
   { title: 'Resumen',                    desc: 'Resultados de todas las pruebas completadas' },
+  { title: 'En directo',                 desc: 'Mira la voz en tiempo real mientras hablas' },
 ]
 
 export default function App() {
@@ -111,6 +113,7 @@ export default function App() {
                 {tab === 3 && <Palabras  onResult={onResult}/>}
                 {tab === 4 && <Prosodia  onResult={onResult}/>}
                 {tab === 5 && <Vocales   onResult={onResult}/>}
+                {tab === 7 && <EnDirecto/>}
                 {tab === 6 && (
                   <Summary
                     key={`summary-${sessionKey}`}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Timer, AudioLines, BookOpen, AudioWaveform, BarChart2, Users, Activity, Waves } from 'lucide-react'
+import { Timer, AudioLines, BookOpen, AudioWaveform, BarChart2, Users, Activity, Waves, Radio } from 'lucide-react'
 import { NiLogo } from './NiLogo'
 
 const C = {
@@ -18,6 +18,7 @@ const TABS = [
   { id: 3, icon: <AudioWaveform size={15} strokeWidth={1.6}/>, label: 'Palabras',           sub: 'Espectrograma' },
   { id: 4, icon: <Activity size={15} strokeWidth={1.6}/>,      label: 'Prosodia',           sub: 'Melodía del habla' },
   { id: 5, icon: <Waves size={15} strokeWidth={1.6}/>,         label: 'Vocales',            sub: 'Espacio vocálico' },
+  { id: 7, icon: <Radio size={15} strokeWidth={1.6}/>,         label: 'En directo',         sub: 'Espectrograma y onda' },
   { id: 6, icon: <BarChart2 size={15} strokeWidth={1.6}/>,     label: 'Resumen',            sub: 'Resultados' },
 ]
 
