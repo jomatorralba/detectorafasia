@@ -2,11 +2,13 @@
 // y produce columnas a intervalos fijos (hop) con:
 //   - espectro en dBFS (STFT, ventana Hann)
 //   - mínimo / máximo de la forma de onda en ese intervalo (oscilograma)
-//   - RMS (dBFS) y F0 (YIN)
+//   - RMS (dBFS), intensidad suavizada (30 ms), F0 (YIN)
+//   - formantes F1–F4 (LPC, cada 10 ms, sólo en tramos sonoros)
 // El resultado no depende de cómo lleguen troceadas las muestras.
 
 import { hanning, rfft } from './spectrogram.js'
 import { yinPitch } from './yin.js'
+import { createFormantTracker } from './formantTrack.js'
 
 export const MODES = {
   wide:   { label: 'Banda ancha',   winMs: 5,  desc: 'Formantes y transiciones (ventana 5 ms)' },
@@ -16,7 +18,7 @@ export const MODES = {
 const nextPow2 = n => 2 ** Math.ceil(Math.log2(n))
 
 export class LiveAnalyzer {
-  constructor(sampleRate, { mode = 'wide', hopMs = 5, f0EveryCols = 4, f0WinMs = 40 } = {}) {
+  constructor(sampleRate, { mode = 'wide', hopMs = 5, f0EveryCols = 4, f0WinMs = 40, ceiling = 5500, fmtEveryMs = 10 } = {}) {
     this.sr       = sampleRate
     this.hop      = Math.round(sampleRate * hopMs / 1000)
     this.winLen   = Math.round(sampleRate * MODES[mode].winMs / 1000)
@@ -26,9 +28,13 @@ export class LiveAnalyzer {
     this.binHz    = sampleRate / this.nfft
     this.f0Len    = Math.round(sampleRate * f0WinMs / 1000)
     this.f0Every  = f0EveryCols
+    this.intLen   = Math.round(sampleRate * 0.03)
+    this.fmt      = createFormantTracker(sampleRate, ceiling)
+    this.fmtEvery = Math.max(1, Math.round(fmtEveryMs / hopMs))
+    this.formants = null
 
     // buffer circular: cubre la ventana más larga que necesitamos
-    this.cap   = nextPow2(Math.max(this.winLen, this.f0Len, this.hop) * 2 + sampleRate * 0.1)
+    this.cap   = nextPow2(Math.max(this.winLen, this.f0Len, this.hop, this.fmt.need) * 2 + sampleRate * 0.1)
     this.buf   = new Float32Array(this.cap)
     this.total = 0             // muestras recibidas
     this.next  = this.hop      // final (exclusivo) de la próxima columna
@@ -103,7 +109,19 @@ export class LiveAnalyzer {
       this.f0 = Math.sqrt(e / fr.length) > 0.003 ? yinPitch(fr, this.sr) : 0
     }
 
+    // intensidad: RMS de los últimos 30 ms
+    let ie = 0
+    for (let p = end - this.intLen; p < end; p++) { const v = p < 0 ? 0 : this.buf[p & (this.cap - 1)]; ie += v * v }
+    const intDb = 20 * Math.log10(Math.max(Math.sqrt(ie / this.intLen), 1e-7))
+
+    // formantes cada 10 ms, sólo si la trama es sonora (hay F0)
+    if (this.cols % this.fmtEvery === 0) {
+      this.formants = this.f0 > 0
+        ? this.fmt.analyze(this._read(end, this.fmt.need, new Float32Array(this.fmt.need))).map(o => o.f)
+        : null
+    }
+
     this.cols++
-    return { t: end / this.sr, min: mn, max: mx, rmsDb, db, f0: this.f0 }
+    return { t: end / this.sr, min: mn, max: mx, rmsDb, intDb, db, f0: this.f0, formants: this.formants }
   }
 }
